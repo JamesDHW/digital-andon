@@ -1,0 +1,75 @@
+name: Andon
+options:
+  bundleIdPrefix: com.example
+  deploymentTarget:
+    macOS: "14.0"
+  createIntermediateGroups: true
+  developmentLanguage: en
+
+configFiles:
+  Debug: Config/Andon.xcconfig
+  Release: Config/Andon.xcconfig
+
+packages:
+  AndonKit:
+    path: AndonKit
+  KeyboardShortcuts:
+    url: https://github.com/sindresorhus/KeyboardShortcuts
+    exactVersion: 2.4.0
+  Sparkle:
+    url: https://github.com/sparkle-project/Sparkle
+    exactVersion: 2.8.1
+
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    MACOSX_DEPLOYMENT_TARGET: "14.0"
+
+targets:
+  Andon:
+    type: application
+    platform: macOS
+    sources:
+      - path: Andon
+        excludes:
+          - "Resources/Info.plist"
+          - "Resources/Andon.entitlements"
+    dependencies:
+      - package: AndonKit
+      - package: KeyboardShortcuts
+      - package: Sparkle
+    settings:
+      base:
+        PRODUCT_NAME: Andon
+        PRODUCT_BUNDLE_IDENTIFIER: $(ANDON_BUNDLE_ID)
+        INFOPLIST_FILE: Andon/Resources/Info.plist
+        CODE_SIGN_ENTITLEMENTS: Andon/Resources/Andon.entitlements
+        CODE_SIGN_STYLE: Automatic
+        ENABLE_HARDENED_RUNTIME: YES
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        COMBINE_HIDPI_IMAGES: YES
+        GENERATE_INFOPLIST_FILE: NO
+      configs:
+        Release:
+          CODE_SIGN_IDENTITY: "Developer ID Application"
+          CODE_SIGN_STYLE: Manual
+          OTHER_CODE_SIGN_FLAGS: "--timestamp"
+
+schemes:
+  Andon:
+    build:
+      targets:
+        Andon: all
+    run:
+      config: Debug
+      environmentVariables:
+        - variable: ANDON_API_URL
+          value: http://localhost:8787
+          isEnabled: false
+        - variable: ANDON_DEV_TOKEN
+          value: paste-the-token-printed-by-pnpm-seed
+          isEnabled: false
+    archive:
+      config: Release

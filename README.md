@@ -1,0 +1,215 @@
+# Digital andon
+
+A digital andon cord for a software team. Anyone can turn their light **amber** ("might need help") or **red** ("stopped, need help now") from a keyboard shortcut. The people who follow them see it straight away in their Mac menu bar, and someone goes to help. Everything is logged, so you can see how long people stay stopped and how long it takes to get unblocked.
+
+![Menu bar states](docs/menubar-preview.png)
+
+Your light is the squircle. After it comes one avatar per person you follow, whose ring is their light, most urgent first. There is no limit: past four people the avatars overlap. A red that has waited 10 minutes breathes. Off hides you everywhere: your squircle disappears, and you vanish from everyone else's bar. On XDR displays (recent MacBook Pros, Pro Display XDR) amber and red are drawn brighter than white; green stays at normal brightness. (Drawn at 8× from the same geometry the app uses.)
+
+| Shortcut | Does |
+|---|---|
+| ⌃⌥G | Clear (green): resolve |
+| ⌃⌥A / ⌃⌥R | Watch (amber) / Stop (red) instantly, no questions |
+| ⌃⌥⇧A / ⌃⌥⇧R | Watch / Stop with a one-line topic (Enter sends, Esc cancels) |
+| ⌃⌥↑ / ⌃⌥↓ | Step up (Clear → Watch → Stop → Clear) or down (Stop → Watch → Clear → Stop). Sent 10 s after your last press, so Stop ↓↓ is logged as one Stop → Clear |
+| ⌃⌥O | Off (hidden from everyone) and back on |
+
+All shortcuts can be changed in Settings. By default only a red notifies, once, with one reminder after 10 minutes if they are still stopped. The banner goes away as soon as they leave red. "Colours only" turns every banner and sound off.
+
+## What's in the repo
+
+```
+backend/   Cloudflare Worker + one Durable Object per team (TypeScript, architecture-rules)
+  src/domain        pure decisions: pull the cord, topics
+  src/application   use cases over injected ports: socket commands, follows, invites, email codes, admin
+  src/adapters      SQLite stores, Web Crypto, Resend/console email
+  src/http          JSON endpoints        src/protocol  the socket contract shared with the app
+  src/runtime       Worker entry, Durable Object, WebSockets, R2 avatars (composition root)
+  public/           /admin (team admin page) and /join (invite landing page)
+  scripts/          seed a local team, drive fake teammates
+  test/             vitest against node:sqlite, the same SQLite dialect Durable Objects use
+app/       macOS menu bar app (Swift)
+  AndonKit/         Swift package: models, wire protocol, state, ranking, menu bar model, notification policy (+ XCTest)
+  Andon/            AppKit + SwiftUI app: status item, dropdown, shortcuts, notifications, onboarding, settings
+  project.yml       XcodeGen spec (the .xcodeproj is generated, not committed)
+scripts/   build-release.sh (sign, notarise, dmg, appcast), update-homebrew-tap.sh
+homebrew/  cask template
+.github/   CI, backend deploy, app release
+PLAN.md    design decisions and the original plan
+```
+
+Both halves follow the [architecture-rules](https://github.com/JamesDHW/architecture-rules) style: errors returned as values (`T | AndonError` in TypeScript, `Result<T, AndonError>` in Swift), only one error-adapter file that catches, no `else`, readonly data, constants in `*.constants.ts` / `*Constants.swift`, small single-concept files. The backend is checked by `architecture-check`; the Swift side mirrors the rules by convention plus `.swiftlint.yml`.
+
+---
+
+## Running it locally
+
+### Prerequisites
+
+```bash
+# Backend
+brew install node@24 pnpm      # Node 24+ is required by architecture-rules
+# App
+xcode-select --install          # and Xcode 16.3 or later from the App Store, opened once
+brew install xcodegen
+```
+
+### 1. Start the backend
+
+```bash
+cd backend
+pnpm install
+pnpm dev                        # wrangler dev with DEV_MODE=true → http://localhost:8787 (Durable Object + R2 run locally)
+# optional: cp .dev.vars.example .dev.vars to set BOOTSTRAP_ADMIN_EMAIL for trying the email sign-in flow
+```
+
+In a second terminal, create a team: you (James, the admin) plus four teammates you follow.
+
+```bash
+cd backend
+pnpm seed
+# → prints ANDON_API_URL and ANDON_DEV_TOKEN for the app
+```
+
+### 2. Run the app against it
+
+```bash
+cd app
+xcodegen generate
+open Andon.xcodeproj
+```
+
+In Xcode: **Product → Scheme → Edit Scheme… → Run → Arguments**, tick `ANDON_API_URL` and `ANDON_DEV_TOKEN` and paste the token from `pnpm seed`. Press ⌘R. The lights appear in your menu bar, with no onboarding.
+
+### 3. Play the teammates
+
+```bash
+cd backend
+pnpm fake-member Priya red "Prod deploy blocked by a failing migration"   # you get a banner; Priya's ring turns red
+pnpm fake-member Tom amber                                                # no banner (amber is quiet by default)
+pnpm fake-member Priya green          # her banner is withdrawn and her ring goes green
+pnpm fake-member Tom off              # Tom disappears from your menu bar
+pnpm fake-member Aisha watch          # print every socket message the team sends
+```
+
+To try onboarding instead, untick the two variables and use the invite flow: open http://localhost:8787/admin/, sign in as the bootstrap address (the 6-digit code is printed in the `pnpm dev` log because no email key is set locally), invite someone, and open the printed `/join/?code=…` link.
+
+---
+
+## Testing
+
+### Automated
+
+```bash
+# Backend: types, your architecture rules, and 29 tests (domain, use cases, SQL adapters, HTTP endpoints)
+cd backend && pnpm run check
+
+# AndonKit: protocol (against JSON captured from the real backend), state, ranking, menu bar model, notification policy
+cd app && swift test --package-path AndonKit
+
+# The app itself builds unsigned in CI
+cd app && xcodegen generate && xcodebuild -scheme Andon -configuration Debug CODE_SIGNING_ALLOWED=NO build
+```
+
+CI (`.github/workflows/ci.yml`) runs all three on every push and pull request.
+
+### Manual checks before a release
+
+Use two Macs, or one Mac plus `pnpm fake-member`:
+
+1. **Install:** the dmg opens on a Mac that has never run Andon, with no Gatekeeper warning.
+2. **Join:** invite from `/admin`. The email arrives, its link opens the app, and you add a photo by dropping an image on the avatar. Your lead sees the photo within seconds.
+3. **Follow:** the inviter already follows the new person. Unfollow them (right-click their row), re-follow them from "Everyone else", then sign in on a second Mac by email code. The same follow list is there.
+4. **Instant pull:** ⌃⌥R. Within a second your squircle turns red, and your lead's bar shows your avatar ringed in red plus a banner.
+5. **Breathing:** leave it red for 10 minutes. Your squircle and your avatar on the lead's bar start to breathe.
+6. **Reminder:** pull red again and ignore it. One reminder arrives after the configured time (set 2 minutes in Settings to test), and nothing after that.
+7. **Topic:** ⌃⌥⇧A, type, Enter. The lead sees the amber and its topic, and gets no banner.
+8. **Colours only:** switch it on in the dropdown. A red changes the bar but makes no banner.
+9. **Off:** ⌃⌥O. Your squircle disappears and you vanish from the lead's bar. ⌃⌥O again brings you back as Clear.
+10. **Resolve:** ⌃⌥G. Your ring turns green and the lead's banner is withdrawn, with no new notification.
+11. **Offline:** close a lid while red for over a minute. The red stays on the lead's bar, and the Mac reconnects by itself when the lid opens.
+12. **Update:** tag a newer version. The running app offers it via Sparkle and relaunches.
+13. **Shortcuts:** remap ⌃⌥R in Settings. The new one works and survives a relaunch.
+
+---
+
+## Deploying the backend (Cloudflare)
+
+A team is small, so it runs comfortably on the Workers free plan (Durable Objects with SQLite storage and R2 are included).
+
+One-time setup:
+
+```bash
+cd backend
+pnpm exec wrangler login
+pnpm exec wrangler r2 bucket create andon-avatars
+pnpm exec wrangler secret put BOOTSTRAP_ADMIN_EMAIL   # your email: the first sign-in by it becomes admin
+pnpm exec wrangler secret put RESEND_API_KEY           # optional; without it emails are only logged (see below)
+# edit wrangler.toml [vars]: ALLOWED_EMAIL_DOMAINS (e.g. "theodo.co.uk"), EMAIL_FROM (a sender on a domain verified in Resend)
+pnpm run deploy                                         # → https://andon.<your-subdomain>.workers.dev
+```
+
+Then open `https://andon.<your-subdomain>.workers.dev/admin/`, sign in with your email (the first sign-in creates you as admin), and invite the team. Each invite is emailed and also shown as a link you can paste into Slack yourself.
+
+**Email:** the backend sends through [Resend](https://resend.com) (free tier: 3,000 emails a month). Without `RESEND_API_KEY`, emails go to the Worker log (`wrangler tail`), and admins can still copy invite links from `/admin`. People can still join; only "sign in with email on a new Mac" needs real email.
+
+**Ongoing:** `.github/workflows/deploy-backend.yml` checks and deploys on every push to `main` that touches `backend/`. It needs repository secrets `CLOUDFLARE_API_TOKEN` (the "Edit Cloudflare Workers" template) and `CLOUDFLARE_ACCOUNT_ID`.
+
+---
+
+## Releasing the app
+
+Non-technical people install from a dmg, so it must be signed and notarised; Homebrew also stopped accepting unsigned casks in September 2026.
+
+### One-time setup
+
+1. **Apple Developer Program**, ideally your company's organisation account. Ask an admin for:
+   - a **Developer ID Application** certificate, exported as a `.p12` with a password
+   - an **App Store Connect API key** with the Developer role (for `notarytool`): the `.p8` file, its key ID and the issuer ID
+2. **Sparkle update keys:** after one local build, run `generate_keys` from `app/build/DerivedData/SourcePackages/artifacts/sparkle/Sparkle/bin/` (or from the Sparkle release zip). It prints the public key; export the private key with `generate_keys -x private.key`.
+3. **`app/Config/Andon.xcconfig`:** set `ANDON_BUNDLE_ID` (e.g. `uk.co.theodo.andon`), `DEVELOPMENT_TEAM`, `ANDON_DEFAULT_SERVER` (your Worker URL), `ANDON_APPCAST_URL` (`https:/$()/github.com/<org>/digital-andon/releases/latest/download/appcast.xml`) and `ANDON_SPARKLE_PUBLIC_KEY`.
+4. **GitHub secrets** (environment `release`): `APPLE_CERTIFICATE_P12_BASE64` (`base64 -i cert.p12 | pbcopy`), `APPLE_CERTIFICATE_PASSWORD`, `APPLE_TEAM_ID`, `NOTARY_KEY_ID`, `NOTARY_ISSUER_ID`, `NOTARY_KEY_P8_BASE64`, `SPARKLE_PRIVATE_KEY`.
+5. **Optional Homebrew tap:** create `<org>/homebrew-tap`, then set repository variable `HOMEBREW_TAP=<org>/homebrew-tap` and secret `HOMEBREW_TAP_TOKEN` (a fine-grained token with contents write on that repo only).
+6. Set `DOWNLOAD_URL` in `backend/wrangler.toml` to `https://github.com/<org>/digital-andon/releases/latest/download/Andon.dmg`, so `https://andon.<…>.workers.dev/download` always serves the latest version.
+
+### Each release
+
+```bash
+git tag v0.1.0
+git push origin v0.1.0
+```
+
+`release.yml` builds, signs with hardened runtime, makes `Andon.dmg`, notarises and staples it, writes `appcast.xml`, attaches both to a GitHub release, and updates the tap. Check the result on a clean Mac:
+
+```bash
+spctl --assess --type open --context context:primary-signature -v Andon.dmg   # "accepted, source=Notarized Developer ID"
+```
+
+`scripts/build-release.sh` runs the same steps locally on a Mac when the same variables are exported.
+
+### How the team installs it
+
+- **Everyone:** follow the invite email (its page offers the download), or open `https://andon.<…>.workers.dev/download`, drag Andon to Applications, open it, and choose **Open in Andon** on the invite page. Updates arrive automatically.
+- **Developers, optionally:** `brew install --cask <org>/tap/andon`.
+
+---
+
+## Observability hooks
+
+- **Event log:** `/admin` shows median time stopped (until help arrives) and time to unblock over 28 days and downloads the full log as CSV. `GET /team/events?afterId=0&limit=5000[&format=csv]` with an admin token returns the same data.
+- **Pull a light from CI or alerting:** create a key in `/admin` → Integrations, then:
+
+```bash
+curl -X POST https://andon.<…>.workers.dev/api/pull \
+  -H "authorization: Bearer $ANDON_API_KEY" -H "content-type: application/json" \
+  -d '{"memberId":"<member id>","colour":"red","topic":"main is failing"}'
+```
+
+A good pattern is a "CI" member, invited like anyone else, that leads follow.
+
+## Troubleshooting
+
+- **The lights are grey and faint:** the app isn't connected. The dropdown says why, and it reconnects with back-off, immediately after the Mac wakes.
+- **No banners:** check System Settings → Notifications → Andon, and that "Colours only" is off. Andon also respects Focus.
+- **A shortcut does nothing:** another app may own it. Remap it in Andon Settings → Menu bar and keys.
+- **"Sign in again":** the device was removed by an admin, or its token was revoked. Use the email code to sign back in.

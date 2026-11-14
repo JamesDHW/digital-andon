@@ -1,0 +1,15 @@
+// Values that differ per organisation. Copy to Config/Local.xcconfig (git-ignored) to override without editing this file.
+// In .xcconfig files "//" starts a comment, so URLs are written with "/$()/".
+
+ANDON_BUNDLE_ID = com.example.andon
+DEVELOPMENT_TEAM =
+
+// Your Worker's address, so people signing in by email don't have to type it. e.g. https:/$()/andon.yourteam.workers.dev
+ANDON_DEFAULT_SERVER =
+
+// Sparkle update feed and public key (from Sparkle's generate_keys). Leave empty for local builds: updates stay off.
+// e.g. https:/$()/github.com/your-org/digital-andon/releases/latest/download/appcast.xml
+ANDON_APPCAST_URL =
+ANDON_SPARKLE_PUBLIC_KEY =
+
+#include? "Local.xcconfig"

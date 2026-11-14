@@ -1,0 +1,33 @@
+name = "andon"
+main = "src/runtime/worker.ts"
+compatibility_date = "2026-10-01"
+
+[assets]
+directory = "./public"
+not_found_handling = "none"
+
+[[durable_objects.bindings]]
+name = "TEAM"
+class_name = "TeamObject"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["TeamObject"]
+
+[[r2_buckets]]
+binding = "AVATARS"
+bucket_name = "andon-avatars"
+
+[vars]
+TEAM_NAME = "Theodo"
+# Comma-separated; empty admits any domain. Example: "theodo.co.uk,theodo.com"
+ALLOWED_EMAIL_DOMAINS = "theodo.com,theodo.co.uk,ext.theodo.com"
+EMAIL_FROM = "Andon <andon@example.com>"
+# Set after the first release, e.g. https://github.com/<org>/digital-andon/releases/latest/download/Andon.dmg
+DOWNLOAD_URL = ""
+# Leave empty to use the request's own origin.
+PUBLIC_ORIGIN = ""
+
+# Secrets (set with `wrangler secret put`):
+#   RESEND_API_KEY         omit to print emails to the log instead of sending them
+#   BOOTSTRAP_ADMIN_EMAIL  the address allowed to create the first admin

@@ -1,0 +1,5 @@
+# Working in this repo
+
+- Backend (`backend/`): before changing code, run `pnpm exec architecture-check describe` to see the layers, what each may import, and which layers may use each package. After changing code, run `pnpm run check` (typecheck, `architecture-check`, tests) and fix every finding. Do not edit `architecture.config.ts` or add suppressions without asking.
+- App (`app/`): Swift follows the same conventions by hand: errors as `Result<_, AndonError>` with `tryCatch` in `AndonKit/Support/TryCatch.swift` as the only `do/catch`; guard clauses, no `else` where a guard reads better; no force unwraps; one concept per file under 200 lines; constants in `*Constants`/`MenuBarLayout`-style namespaces. Put logic that can be tested in `AndonKit` and run `swift test --package-path app/AndonKit`.
+- The wire protocol is defined twice: `backend/src/protocol` and `app/AndonKit/Sources/AndonKit/Protocol`. Change both together, and refresh the captured JSON in `app/AndonKit/Tests/AndonKitTests/Fixtures.swift` from a real `pnpm dev` run.

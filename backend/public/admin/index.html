@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Andon admin</title>
+<link rel="stylesheet" href="admin.css">
+</head>
+<body>
+<header>
+  <h1><span class="dot red"></span>Andon admin</h1>
+  <button id="sign-out" class="link" hidden>Sign out</button>
+</header>
+
+<main>
+  <section id="sign-in" class="card">
+    <h2>Sign in</h2>
+    <p class="muted">We'll email you a 6-digit code. The first sign-in by the bootstrap address creates the admin.</p>
+    <form id="email-form" class="row">
+      <input id="email" type="email" required placeholder="you@company.com" autocomplete="email">
+      <button type="submit">Email me a code</button>
+    </form>
+    <form id="code-form" class="row" hidden>
+      <input id="code" inputmode="numeric" pattern="[0-9]{6}" required placeholder="123456" autocomplete="one-time-code">
+      <button type="submit">Sign in</button>
+    </form>
+    <p id="sign-in-message" class="message"></p>
+  </section>
+
+  <div id="console" hidden>
+    <section class="card">
+      <h2>Invite someone</h2>
+      <form id="invite-form" class="row">
+        <input id="invite-name" required placeholder="Priya Shah" autocomplete="off">
+        <input id="invite-email" type="email" required placeholder="priya@company.com" autocomplete="off">
+        <button type="submit">Send invite</button>
+      </form>
+      <div id="invite-result" class="result" hidden>
+        <p id="invite-message" class="muted"></p>
+        <div class="row"><input id="invite-link" readonly><button id="copy-link" type="button">Copy link</button></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Team</h2>
+      <table>
+        <thead><tr><th>Name</th><th>Email</th><th>Role</th><th></th></tr></thead>
+        <tbody id="members"></tbody>
+      </table>
+    </section>
+
+    <section class="card">
+      <h2>Response times</h2>
+      <p class="muted">From the event log. Time red is how long someone waited for help; time to unblock runs from first amber or red until clear.</p>
+      <div class="stats" id="stats"></div>
+      <div class="row"><button id="download-csv" type="button">Download event log (CSV)</button></div>
+    </section>
+
+    <section class="card">
+      <h2>Settings</h2>
+      <form id="settings-form">
+        <label>Team name <input id="team-name" required></label>
+        <label>Allowed email domains <input id="domains" placeholder="company.com, company.co.uk"></label>
+        <p class="muted">Leave empty to allow any domain.</p>
+        <button type="submit">Save settings</button>
+      </form>
+    </section>
+
+    <section class="card">
+      <h2>Integrations</h2>
+      <p class="muted">CI and alerting can pull someone's light with <code>POST /api/pull</code> and this key. Rotating replaces the old key.</p>
+      <div class="row"><button id="rotate-key" type="button">Create new API key</button></div>
+      <div class="row" id="api-key-row" hidden><input id="api-key" readonly></div>
+      <pre id="api-example" hidden></pre>
+    </section>
+    <p id="console-message" class="message"></p>
+  </div>
+</main>
+<script src="admin.js"></script>
+</body>
+</html>

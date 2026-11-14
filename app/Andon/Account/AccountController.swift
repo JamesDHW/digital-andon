@@ -1,0 +1,89 @@
+import AndonKit
+import AppKit
+import Combine
+import SystemConfiguration
+
+/// Who this Mac is signed in as, and every account-level request: joining, email codes, profile and follows.
+@MainActor
+final class AccountController: ObservableObject {
+    @Published private(set) var session: AccountSession?
+
+    private let sessionStore: KeychainSessionStore
+    private let transport: HTTPTransport
+    private let isDevelopmentSession: Bool
+    let deviceName: String
+
+    init(sessionStore: KeychainSessionStore, transport: HTTPTransport, environment: AppEnvironment) {
+        self.sessionStore = sessionStore
+        self.transport = transport
+        self.isDevelopmentSession = environment.developmentSession != nil
+        self.deviceName = Self.currentDeviceName()
+        self.session = environment.developmentSession ?? sessionStore.load()
+    }
+
+    func join(_ invitation: JoinInvitation) async -> Result<Void, AndonError> {
+        let signedIn = await transport.send(APIRequest.redeemInvite(invitation, deviceName: deviceName), expecting: SignedInDevice.self)
+        return signedIn.flatMap { device in signIn(AccountSession(server: invitation.server, deviceToken: device.deviceToken)) }
+    }
+
+    func requestCode(server: URL, email: String) async -> Result<Void, AndonError> {
+        await transport.send(APIRequest.requestCode(server: server, email: email))
+    }
+
+    func verifyCode(server: URL, email: String, code: String) async -> Result<Void, AndonError> {
+        let request = APIRequest.verifyCode(server: server, email: email, code: code, deviceName: deviceName)
+        let signedIn = await transport.send(request, expecting: SignedInDevice.self)
+        return signedIn.flatMap { device in signIn(AccountSession(server: server, deviceToken: device.deviceToken)) }
+    }
+
+    func signOut() {
+        sessionStore.clear()
+        session = nil
+    }
+
+    func updateProfile(_ change: ProfileChange) async -> Result<Member, AndonError> {
+        guard let session else { return .failure(AndonError(.unauthorised, "Sign in first.")) }
+        return await transport.send(APIRequest.updateProfile(session, change: change), expecting: Member.self)
+    }
+
+    /// The photo is downscaled to a small PNG first, so any image a person drops in is accepted.
+    func uploadAvatar(from fileURL: URL) async -> Result<Member, AndonError> {
+        guard let session else { return .failure(AndonError(.unauthorised, "Sign in first.")) }
+        let image = AvatarImageEncoder.pngData(from: fileURL, maxDimension: AppConstants.avatarMaxDimension)
+        return await image.asyncFlatMap { pngData in
+            await transport.send(.success(APIRequest.uploadAvatar(session, image: pngData, contentType: "image/png")), expecting: Member.self)
+        }
+    }
+
+    func replaceFollows(_ memberIDs: [MemberID]) async -> Result<Void, AndonError> {
+        guard let session else { return .failure(AndonError(.unauthorised, "Sign in first.")) }
+        return await transport.send(APIRequest.replaceFollows(session, memberIDs: memberIDs))
+    }
+
+    private func signIn(_ newSession: AccountSession) -> Result<Void, AndonError> {
+        let saved: Result<Void, AndonError> = isDevelopmentSession ? .success(()) : sessionStore.save(newSession)
+        if case .success = saved {
+            session = newSession
+        }
+        return saved
+    }
+}
+
+private extension AccountController {
+    /// The Mac's name from Sharing settings; Host.current() would do DNS lookups on the main thread.
+    static func currentDeviceName() -> String {
+        let computerName = SCDynamicStoreCopyComputerName(nil, nil) as String? ?? "Mac"
+        return String(computerName.prefix(AppConstants.deviceNameMaxLength))
+    }
+}
+
+private extension Result {
+    func asyncFlatMap<NewSuccess>(_ transform: (Success) async -> Result<NewSuccess, Failure>) async -> Result<NewSuccess, Failure> {
+        switch self {
+        case let .success(value):
+            return await transform(value)
+        case let .failure(error):
+            return .failure(error)
+        }
+    }
+}

@@ -1,0 +1,3 @@
+DEV_MODE=true
+BOOTSTRAP_ADMIN_EMAIL=you@example.com
+# RESEND_API_KEY=re_...   leave unset locally: emails (codes and links) are printed in the dev log

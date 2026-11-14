@@ -1,0 +1,8 @@
+const MINUTE_MS = 60_000;
+const HOUR_MS = 60 * MINUTE_MS;
+
+export const INVITE_LIFETIME_MS = 48 * HOUR_MS;
+export const LOGIN_CODE_LIFETIME_MS = 10 * MINUTE_MS;
+export const LOGIN_CODE_RESEND_INTERVAL_MS = 60_000;
+export const LOGIN_CODE_DIGITS = 6;
+export const LOGIN_CODE_MAX_ATTEMPTS = 5;

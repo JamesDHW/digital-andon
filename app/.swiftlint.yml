@@ -1,0 +1,41 @@
+# Mirrors the TypeScript architecture-rules where Swift has an equivalent.
+included:
+  - Andon
+  - AndonKit/Sources
+  - AndonKit/Tests
+opt_in_rules:
+  - force_unwrapping            # no non-null assertions
+  - implicitly_unwrapped_optional
+  - explicit_init
+  - first_where
+  - contains_over_filter_count
+  - empty_count
+  - sorted_first_last
+  - redundant_nil_coalescing
+  - toggle_bool
+  - prefer_self_in_static_references
+  - unavailable_function
+  - discouraged_optional_boolean
+  - fatal_error_message
+disabled_rules:
+  - todo
+file_length:
+  warning: 150                  # architecture-rules: warn at 150 lines
+  error: 200                    # and fail at 200
+function_body_length:
+  warning: 40
+type_body_length:
+  warning: 150
+  error: 200
+line_length:
+  warning: 160
+  error: 200
+force_try: error                # errors are values; only TryCatch.swift catches
+force_cast: error
+cyclomatic_complexity:
+  warning: 8
+identifier_name:
+  min_length: 2
+  excluded: [id]
+nesting:
+  type_level: 2

@@ -1,0 +1,14 @@
+.DS_Store
+node_modules/
+.wrangler/
+.dev.vars
+.tmp/
+app/build/
+app/*.xcodeproj/xcuserdata/
+app/*.xcodeproj/project.xcworkspace/xcuserdata/
+DerivedData/
+*.dmg
+app/Andon.xcodeproj/
+app/Config/Local.xcconfig
+app/AndonKit/.build/
+.swiftpm/

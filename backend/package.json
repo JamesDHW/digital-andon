@@ -1,0 +1,39 @@
+{
+  "name": "andon-backend",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "scripts": {
+    "dev": "wrangler dev --var DEV_MODE:true",
+    "deploy": "wrangler deploy",
+    "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.worker.json && tsc -p tsconfig.node.json",
+    "architecture": "architecture-check",
+    "check": "pnpm run typecheck && pnpm run architecture && pnpm test",
+    "fake-member": "node scripts/fakeMember.ts",
+    "seed": "node scripts/seedDevTeam.ts"
+  },
+  "dependencies": {
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "5.20261012.1",
+    "@types/node": "24.19.2",
+    "architecture-rules": "github:JamesDHW/architecture-rules#6d19d2e3ecdc268410a41470d4675f11bcec8b07",
+    "oxlint": "1.80.0",
+    "oxlint-tsgolint": "7.0.2004",
+    "typescript": "7.0.2",
+    "vitest": "4.1.11",
+    "wrangler": "4.149.0"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "workerd"
+    ]
+  },
+  "packageManager": "pnpm@10.28.0"
+}
