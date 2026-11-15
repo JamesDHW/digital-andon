@@ -149,6 +149,28 @@ const loadStats = async () => {
   }));
 };
 
+/** Admins see the console; everyone else is pointed at the app. */
+const finishSignIn = async (token) => {
+  session.token = token;
+  writeToken(token);
+  const me = await api("GET", "/me");
+  if (me.role !== "admin") {
+    signOut();
+    showMessage("sign-in-message", "You're signed up. This page is for team admins: use the Andon app on your Mac.", true);
+    return;
+  }
+  showMessage("sign-in-message", "");
+  await showConsole();
+};
+
+/** Google sign-in comes back as /admin/#token=… (or #error=…). The fragment never reaches a server; clear it at once. */
+const takeGoogleResult = () => {
+  const result = new URLSearchParams(location.hash.slice(1));
+  if (!result.has("token") && !result.has("error")) return null;
+  history.replaceState(null, "", location.pathname);
+  return { token: result.get("token"), error: result.get("error") };
+};
+
 element("email-form").addEventListener("submit", async (event) => {
   event.preventDefault();
   session.pendingEmail = element("email").value.trim();
@@ -166,16 +188,7 @@ element("code-form").addEventListener("submit", async (event) => {
   event.preventDefault();
   try {
     const device = await api("POST", "/auth/code/verify", { email: session.pendingEmail, code: element("code").value, deviceName: "Admin page" });
-    session.token = device.deviceToken;
-    writeToken(device.deviceToken);
-    const me = await api("GET", "/me");
-    if (me.role !== "admin") {
-      signOut();
-      showMessage("sign-in-message", "This page is for team admins. Use the Andon app instead.", true);
-      return;
-    }
-    showMessage("sign-in-message", "");
-    await showConsole();
+    await finishSignIn(device.deviceToken);
   } catch (failure) {
     showMessage("sign-in-message", failure.message, true);
   }
@@ -240,4 +253,9 @@ element("download-csv").addEventListener("click", async () => {
 
 element("sign-out").addEventListener("click", signOut);
 
-if (session.token !== null) showConsole();
+const googleResult = takeGoogleResult();
+if (googleResult?.error) showMessage("sign-in-message", googleResult.error, true);
+if (googleResult?.token) {
+  finishSignIn(googleResult.token).catch((failure) => showMessage("sign-in-message", failure.message, true));
+}
+if (!googleResult?.token && session.token !== null) showConsole();

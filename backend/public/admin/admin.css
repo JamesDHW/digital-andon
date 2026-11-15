@@ -17,6 +17,9 @@ label input { display: block; width: 100%; margin-top: 4px; }
 button { font: inherit; border: 1px solid var(--border); background: transparent; color: var(--text); border-radius: 8px; padding: 8px 14px; cursor: pointer; }
 button[type="submit"] { background: var(--accent); border-color: var(--accent); color: #fff; }
 button.link { border: 0; color: var(--accent); padding: 0; }
+a.button { display: inline-block; text-decoration: none; border: 1px solid var(--border); border-radius: 8px; padding: 8px 14px; color: var(--text); }
+a.button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+details summary { cursor: pointer; margin: 8px 0; }
 button.danger { color: var(--danger); }
 table { width: 100%; border-collapse: collapse; font-size: 14px; }
 th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--border); }

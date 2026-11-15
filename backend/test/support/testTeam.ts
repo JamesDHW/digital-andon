@@ -12,6 +12,7 @@ import type { Member, MemberRole } from "../../src/domain/member.js";
 import { isMemberId, type MemberId } from "../../src/domain/memberId.js";
 import { AndonError } from "../../src/errors/andonError.js";
 import { createFakeClock, type FakeClock } from "./fakeClock.state.js";
+import { createFakeGoogle, type FakeGoogle } from "./fakeGoogle.state.js";
 import { createFakeSecrets } from "./fakeSecrets.state.js";
 import { createMemorySql } from "./memorySql.js";
 import { createRecordingMailer, type RecordingMailer } from "./recordingMailer.state.js";
@@ -21,6 +22,7 @@ export type TestTeam = {
   readonly dependencies: AuthDependencies;
   readonly clock: FakeClock;
   readonly mailer: RecordingMailer;
+  readonly google: FakeGoogle;
 };
 
 export const createTestTeam = (options: { readonly allowedDomains?: readonly string[]; readonly bootstrapAdminEmail?: string } = {}): TestTeam => {
@@ -28,6 +30,7 @@ export const createTestTeam = (options: { readonly allowedDomains?: readonly str
   migrateSchema(sql);
   const clock = createFakeClock(TEST_START_TIME);
   const mailer = createRecordingMailer();
+  const google = createFakeGoogle();
   const dependencies: AuthDependencies = {
     members: createSqlMemberStore(sql),
     lights: createSqlLightStore(sql),
@@ -41,8 +44,9 @@ export const createTestTeam = (options: { readonly allowedDomains?: readonly str
     onlineMembers: () => [],
     publicOrigin: TEST_ORIGIN,
     bootstrapAdminEmail: options.bootstrapAdminEmail ?? null,
+    google,
   };
-  return { dependencies, clock, mailer };
+  return { dependencies, clock, mailer, google };
 };
 
 export const memberIdOf = (rawMemberId: string): MemberId => {

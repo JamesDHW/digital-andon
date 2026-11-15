@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import type { GoogleClientConfiguration } from "../adapters/googleOpenIdConnect.js";
 import type { TeamSettings } from "../application/ports/settingsStore.js";
 import { DEFAULT_EMAIL_FROM, DEFAULT_TEAM_NAME } from "./runtime.constants.js";
 
@@ -15,6 +16,8 @@ export type AndonEnvironment = {
   readonly PUBLIC_ORIGIN?: string;
   readonly DOWNLOAD_URL?: string;
   readonly DEV_MODE?: string;
+  readonly GOOGLE_CLIENT_ID?: string;
+  readonly GOOGLE_CLIENT_SECRET?: string;
 };
 
 export type DeploymentConfiguration = {
@@ -25,6 +28,8 @@ export type DeploymentConfiguration = {
   readonly downloadUrl: string | null;
   readonly isDevelopmentMode: boolean;
   readonly defaultSettings: TeamSettings;
+  /** Null unless both the client ID and its secret are set. */
+  readonly google: GoogleClientConfiguration | null;
 };
 
 const blankAsNull = (rawValue: string | undefined): string | null => {
@@ -42,6 +47,8 @@ const variablesSchema = z.object({
   PUBLIC_ORIGIN: z.url().optional().or(z.literal("")),
   DOWNLOAD_URL: z.url().optional().or(z.literal("")),
   DEV_MODE: z.string().optional(),
+  GOOGLE_CLIENT_ID: z.string().optional(),
+  GOOGLE_CLIENT_SECRET: z.string().optional(),
 });
 
 /** Environment variables are untrusted input; misconfiguration falls back to safe defaults. */
@@ -58,5 +65,14 @@ export const readDeploymentConfiguration = (environment: AndonEnvironment): Depl
     downloadUrl: blankAsNull(variables.DOWNLOAD_URL),
     isDevelopmentMode: variables.DEV_MODE === "true",
     defaultSettings: { teamName: blankAsNull(variables.TEAM_NAME) ?? DEFAULT_TEAM_NAME, allowedDomains, apiKeyHash: null },
+    google: readGoogleClient(variables.GOOGLE_CLIENT_ID, variables.GOOGLE_CLIENT_SECRET),
   };
+};
+
+const readGoogleClient = (rawClientId: string | undefined, rawClientSecret: string | undefined): GoogleClientConfiguration | null => {
+  const clientId = blankAsNull(rawClientId);
+  const clientSecret = blankAsNull(rawClientSecret);
+  if (clientId === null) return null;
+  if (clientSecret === null) return null;
+  return { clientId, clientSecret };
 };

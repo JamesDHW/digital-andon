@@ -1,5 +1,6 @@
 import { handleApiPull } from "./apiRoutes.js";
 import { handleCodeRequest, handleCodeVerify, handleDevSignIn, handleInvite, handleRedeem } from "./authRoutes.js";
+import { handleGoogleCallback, handleGoogleStart } from "./googleRoutes.js";
 import { MEMBER_PATH_PATTERN } from "./http.constants.js";
 import { respondOnly, type HttpContext, type HttpOutcome } from "./httpOutcome.js";
 import { notFoundResponse } from "./httpResponses.js";
@@ -25,6 +26,10 @@ export const routeRequest = async (context: HttpContext): Promise<HttpOutcome> =
       return handleCodeRequest(context);
     case "POST /auth/code/verify":
       return handleCodeVerify(context);
+    case "GET /auth/google/start":
+      return handleGoogleStart(context);
+    case "GET /auth/google/callback":
+      return handleGoogleCallback(context);
     case "GET /me":
       return handleGetMe(context);
     case "PATCH /me":

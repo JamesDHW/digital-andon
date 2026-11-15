@@ -27,6 +27,8 @@ struct OnboardingView: View {
     @ViewBuilder
     private var stepContent: some View {
         switch model.step {
+        case .welcome:
+            welcomeStep
         case .invite:
             inviteStep
         case .email:
@@ -38,6 +40,30 @@ struct OnboardingView: View {
         }
     }
 
+    private var welcomeStep: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Sign in to your team's andon").font(.title2.weight(.semibold))
+            Text("Use your work Google account. Your name and photo come with it, so your team knows who's stopped.")
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+            if model.isServerFieldShown {
+                TextField("Team address, e.g. https://andon.yourteam.workers.dev", text: $model.serverText).textFieldStyle(.roundedBorder)
+            }
+            Button(action: model.signInWithGoogle) {
+                Text("Continue with Google").font(.headline).frame(maxWidth: .infinity, minHeight: 28)
+            }
+            .buttonStyle(.borderedProminent)
+            .controlSize(.large)
+            .keyboardShortcut(.defaultAction)
+            HStack {
+                Button("Have an invite link?") { model.show(.invite) }.buttonStyle(.link)
+                Spacer()
+                Button("Use an email code") { model.show(.email) }.buttonStyle(.link)
+            }
+            .font(.callout)
+        }
+    }
+
     private var inviteStep: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text("Join your team's andon board").font(.title2.weight(.semibold))
@@ -46,7 +72,7 @@ struct OnboardingView: View {
                 .textFieldStyle(.roundedBorder)
                 .onSubmit(model.join)
             HStack {
-                Button("Already joined? Sign in with your email") { model.show(.email) }.buttonStyle(.link)
+                Button("Back") { model.show(.welcome) }.buttonStyle(.link)
                 Spacer()
                 Button("Join", action: model.join).keyboardShortcut(.defaultAction)
             }
@@ -62,7 +88,7 @@ struct OnboardingView: View {
             }
             TextField("you@company.com", text: $model.email).textFieldStyle(.roundedBorder).onSubmit(model.requestCode)
             HStack {
-                Button("Back") { model.show(.invite) }.buttonStyle(.link)
+                Button("Back") { model.show(.welcome) }.buttonStyle(.link)
                 Spacer()
                 Button("Email me a code", action: model.requestCode).keyboardShortcut(.defaultAction)
             }
@@ -84,7 +110,7 @@ struct OnboardingView: View {
 
     @ViewBuilder
     private var profileStep: some View {
-        Text("You're in. Add a photo so your team recognises you.").font(.title3.weight(.semibold))
+        Text("You're in. Check your name and photo so your team recognises you.").font(.title3.weight(.semibold))
         if let yourself = teamStore.state?.yourself {
             ProfileEditor(accountController: accountController, member: yourself)
         }

@@ -143,15 +143,24 @@ One-time setup:
 cd backend
 pnpm exec wrangler login
 pnpm exec wrangler r2 bucket create andon-avatars
-pnpm exec wrangler secret put BOOTSTRAP_ADMIN_EMAIL   # your email: the first sign-in by it becomes admin
-pnpm exec wrangler secret put RESEND_API_KEY           # optional; without it emails are only logged (see below)
-# edit wrangler.toml [vars]: ALLOWED_EMAIL_DOMAINS (e.g. "theodo.co.uk"), EMAIL_FROM (a sender on a domain verified in Resend)
+pnpm exec wrangler secret put BOOTSTRAP_ADMIN_EMAIL   # your email: signing in with it makes you admin
+pnpm exec wrangler secret put GOOGLE_CLIENT_SECRET     # from the Google OAuth client below
+# edit wrangler.toml [vars]: GOOGLE_CLIENT_ID, ALLOWED_EMAIL_DOMAINS (e.g. "theodo.com")
 pnpm run deploy                                         # → https://andon.<your-subdomain>.workers.dev
 ```
 
-Then open `https://andon.<your-subdomain>.workers.dev/admin/`, sign in with your email (the first sign-in creates you as admin), and invite the team. Each invite is emailed and also shown as a link you can paste into Slack yourself.
+Then open `https://andon.<your-subdomain>.workers.dev/admin/` and sign in with Google using the bootstrap address. Allowed domains can be changed later on that page.
 
-**Email:** the backend sends through [Resend](https://resend.com) (free tier: 3,000 emails a month). Without `RESEND_API_KEY`, emails go to the Worker log (`wrangler tail`), and admins can still copy invite links from `/admin`. People can still join; only "sign in with email on a new Mac" needs real email.
+**Google sign-in** needs no Google Workspace admin: an OAuth client in any Google Cloud project works for every Google account.
+
+1. In [Google Cloud Console](https://console.cloud.google.com/), create a project (e.g. "Andon").
+2. **Google Auth Platform → Branding:** app name "Andon", your email as support and developer contact. **Audience:** External, then **Publish app**. Only the basic `openid email profile` scopes are used, so Google doesn't review it.
+3. **Clients → Create client:** type **Web application**, authorised redirect URI `https://andon.<your-subdomain>.workers.dev/auth/google/callback` (add `http://localhost:8787/auth/google/callback` for local development).
+4. Put the client ID in `wrangler.toml` as `GOOGLE_CLIENT_ID` and the secret in `wrangler secret put GOOGLE_CLIENT_SECRET`.
+
+Anyone whose verified Google email is on an allowed domain can then join on their own, from the app or the admin page, with their Google name and photo. If a company's Workspace blocks unknown apps, its admin has to allow this client; otherwise nothing is needed.
+
+**Fallbacks:** invite links (from `/admin`) and 6-digit email codes still work. Codes are sent through [Resend](https://resend.com) if `RESEND_API_KEY` is set (with `EMAIL_FROM` on a domain verified there); without it they only appear in `wrangler tail`.
 
 **Ongoing:** `.github/workflows/deploy-backend.yml` checks and deploys on every push to `main` that touches `backend/`. It needs repository secrets `CLOUDFLARE_API_TOKEN` (the "Edit Cloudflare Workers" template) and `CLOUDFLARE_ACCOUNT_ID`.
 
@@ -189,7 +198,7 @@ spctl --assess --type open --context context:primary-signature -v Andon.dmg   # 
 
 ### How the team installs it
 
-- **Everyone:** follow the invite email (its page offers the download), or open `https://andon.<…>.workers.dev/download`, drag Andon to Applications, open it, and choose **Open in Andon** on the invite page. Updates arrive automatically.
+- **Everyone:** open `https://andon.<…>.workers.dev/download`, drag Andon to Applications, open it and click **Continue with Google**. Updates arrive automatically.
 - **Developers, optionally:** `brew install --cask <org>/tap/andon`.
 
 ---

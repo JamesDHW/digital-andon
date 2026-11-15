@@ -2,6 +2,8 @@ import Foundation
 
 enum AppConstants {
     static let keychainService = "Andon"
+    static let urlScheme = "andon"
+    static let googleSignInPath = "auth/google/start"
     static let keychainAccount = "session"
     static let preferencesDefaultsKey = "andon.preferences"
     static let defaultServerInfoKey = "AndonDefaultServer"

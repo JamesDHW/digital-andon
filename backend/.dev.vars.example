@@ -1,3 +1,5 @@
 DEV_MODE=true
 BOOTSTRAP_ADMIN_EMAIL=you@example.com
+# GOOGLE_CLIENT_ID=...apps.googleusercontent.com   with http://localhost:8787/auth/google/callback as a redirect URI
+# GOOGLE_CLIENT_SECRET=...
 # RESEND_API_KEY=re_...   leave unset locally: emails (codes and links) are printed in the dev log

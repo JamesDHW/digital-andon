@@ -20,14 +20,18 @@ bucket_name = "andon-avatars"
 
 [vars]
 TEAM_NAME = "Theodo"
-# Comma-separated; empty admits any domain. Example: "theodo.co.uk,theodo.com"
+# Comma-separated. People on these domains can join with Google on their own; admins can change it on /admin.
+# Empty: nobody joins on their own, and invites may go to any domain. Example: "theodo.co.uk,theodo.com"
 ALLOWED_EMAIL_DOMAINS = "theodo.com,theodo.co.uk,ext.theodo.com"
 EMAIL_FROM = "Andon <andon@example.com>"
 # Set after the first release, e.g. https://github.com/<org>/digital-andon/releases/latest/download/Andon.dmg
-DOWNLOAD_URL = ""
+DOWNLOAD_URL = "https://github.com/JamesDHW/digital-andon/releases/latest/download/Andon.dmg"
 # Leave empty to use the request's own origin.
 PUBLIC_ORIGIN = ""
+# The Web application OAuth client from Google Cloud Console; its secret is GOOGLE_CLIENT_SECRET. Empty turns Google sign-in off.
+GOOGLE_CLIENT_ID = "285201701815-q4g6co31sh0ltikodrp2sbmc84ocf470.apps.googleusercontent.com"
 
 # Secrets (set with `wrangler secret put`):
 #   RESEND_API_KEY         omit to print emails to the log instead of sending them
 #   BOOTSTRAP_ADMIN_EMAIL  the address allowed to create the first admin
+#   GOOGLE_CLIENT_SECRET   the Google OAuth client's secret

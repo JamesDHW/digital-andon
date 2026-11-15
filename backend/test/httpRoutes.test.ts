@@ -60,6 +60,35 @@ describe("HTTP endpoints", () => {
     expect((await send(team, "GET", "/nowhere", { token: priyaToken })).response.status).toBe(404);
   });
 
+  it("signs in with Google: the app gets an andon:// redirect, the admin page a URL fragment, and a cancel says so", async () => {
+    const team = createTestTeam({ allowedDomains: ["theodo.com"] });
+    team.google.signInAs({ email: "priya@theodo.com", isEmailVerified: true, name: "Priya", pictureUrl: null });
+    const returnFromGoogle = async (client: string, query: string): Promise<string> => {
+      const start = await send(team, "GET", `/auth/google/start?client=${client}&device=Priya%27s%20Mac`);
+      expect(start.response.status).toBe(302);
+      const googleAddress = start.response.headers.get("location");
+      const state = new URL(googleAddress ?? "").searchParams.get("state");
+      const callback = await send(team, "GET", `/auth/google/callback?state=${encodeURIComponent(state ?? "")}${query}`);
+      expect(callback.response.status).toBe(302);
+      const returnAddress = callback.response.headers.get("location");
+      return returnAddress ?? "";
+    };
+
+    const appAddress = new URL(await returnFromGoogle("app", "&code=google-code"));
+    expect(`${appAddress.protocol}//${appAddress.host}`).toBe("andon://signed-in");
+    const appToken = appAddress.searchParams.get("token") ?? "";
+    expect((await send(team, "GET", "/me", { token: appToken })).response.status).toBe(200);
+
+    const webAddress = await returnFromGoogle("web", "&code=google-code");
+    expect(webAddress.startsWith(`${TEST_ORIGIN}/admin/#token=`)).toBe(true);
+
+    const cancelled = new URL(await returnFromGoogle("app", "&error=access_denied"));
+    expect(cancelled.searchParams.get("error")).toBe("Google sign-in was cancelled.");
+
+    const replayed = await send(team, "GET", "/auth/google/callback?state=made-up&code=google-code");
+    expect(replayed.response.status).toBe(400);
+  });
+
   it("refuses development sign-in unless DEV_MODE is on", async () => {
     const team = createTestTeam();
     const outcome = await send(team, "POST", "/dev/sign-in", { body: { email: "x@example.com", name: "X" } });

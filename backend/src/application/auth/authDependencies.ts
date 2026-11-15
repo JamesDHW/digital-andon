@@ -1,5 +1,6 @@
 import type { MemberId } from "../../domain/memberId.js";
 import type { CredentialStore } from "../ports/credentialStore.js";
+import type { GoogleIdentity } from "../ports/googleIdentity.js";
 import type { Mailer } from "../ports/mailer.js";
 import type { Secrets } from "../ports/secrets.js";
 import type { SettingsStore } from "../ports/settingsStore.js";
@@ -14,6 +15,8 @@ export type AuthDependencies = TeamDependencies & {
   readonly publicOrigin: string;
   /** The one address allowed to create the first admin on an empty team. */
   readonly bootstrapAdminEmail: string | null;
+  /** Null when this deployment has no Google OAuth client configured. */
+  readonly google: GoogleIdentity | null;
 };
 
 export type SignedInDevice = {

@@ -15,7 +15,10 @@
 <main>
   <section id="sign-in" class="card">
     <h2>Sign in</h2>
-    <p class="muted">We'll email you a 6-digit code. The first sign-in by the bootstrap address creates the admin.</p>
+    <p><a class="button primary" href="/auth/google/start?client=web">Sign in with Google</a></p>
+    <details>
+      <summary class="muted">Use an email code instead</summary>
+      <p class="muted">We'll email you a 6-digit code. The first sign-in by the bootstrap address creates the admin.</p>
     <form id="email-form" class="row">
       <input id="email" type="email" required placeholder="you@company.com" autocomplete="email">
       <button type="submit">Email me a code</button>
@@ -24,6 +27,7 @@
       <input id="code" inputmode="numeric" pattern="[0-9]{6}" required placeholder="123456" autocomplete="one-time-code">
       <button type="submit">Sign in</button>
     </form>
+    </details>
     <p id="sign-in-message" class="message"></p>
   </section>
 
@@ -61,7 +65,7 @@
       <form id="settings-form">
         <label>Team name <input id="team-name" required></label>
         <label>Allowed email domains <input id="domains" placeholder="company.com, company.co.uk"></label>
-        <p class="muted">Leave empty to allow any domain.</p>
+        <p class="muted">Anyone with a Google account on these domains can join on their own. Leave empty to let in invited people only.</p>
         <button type="submit">Save settings</button>
       </form>
     </section>

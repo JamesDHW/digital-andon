@@ -1,6 +1,7 @@
 import type { AuthDependencies } from "../application/auth/authDependencies.js";
 import type { MemberId } from "../domain/memberId.js";
 import { createConsoleMailer } from "../adapters/consoleMailer.js";
+import { createGoogleIdentity } from "../adapters/googleOpenIdConnect.js";
 import { createResendMailer } from "../adapters/resendMailer.js";
 import { createSqlCredentialStore } from "../adapters/sql/sqlCredentialStore.js";
 import { createSqlEventStore } from "../adapters/sql/sqlEventStore.js";
@@ -33,6 +34,7 @@ export const createTeamDependencies = (runtime: TeamRuntime): AuthDependencies =
   onlineMembers: runtime.onlineMembers,
   publicOrigin: runtime.publicOrigin,
   bootstrapAdminEmail: runtime.configuration.bootstrapAdminEmail,
+  google: runtime.configuration.google === null ? null : createGoogleIdentity(runtime.configuration.google),
 });
 
 const chooseMailer = (configuration: DeploymentConfiguration) => {

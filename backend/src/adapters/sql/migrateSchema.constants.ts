@@ -8,4 +8,5 @@ export const SCHEMA_STATEMENTS = [
   "CREATE TABLE IF NOT EXISTS invites (code_hash TEXT PRIMARY KEY, email TEXT NOT NULL, name TEXT NOT NULL, invited_by TEXT NOT NULL, expires_at INTEGER NOT NULL, used_at INTEGER)",
   "CREATE TABLE IF NOT EXISTS login_codes (email TEXT PRIMARY KEY, code_hash TEXT NOT NULL, created_at INTEGER NOT NULL, expires_at INTEGER NOT NULL, attempts INTEGER NOT NULL)",
   "CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT NOT NULL)",
+  "CREATE TABLE IF NOT EXISTS sign_in_attempts (state_hash TEXT PRIMARY KEY, code_verifier TEXT NOT NULL, client TEXT NOT NULL, device_name TEXT NOT NULL, expires_at INTEGER NOT NULL)",
 ] as const;

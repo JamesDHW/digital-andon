@@ -2,17 +2,18 @@ import AndonKit
 import Combine
 import Foundation
 
-/// Joining needs no account: an invite link, or for a new Mac, a code emailed to your work address.
+/// Signing in is one click with a work Google account. An invite link or an emailed code still work as fallbacks.
 @MainActor
 final class OnboardingModel: ObservableObject {
     enum Step: Equatable {
+        case welcome
         case invite
         case email
         case code
         case profile
     }
 
-    @Published var step: Step = .invite
+    @Published var step: Step = .welcome
     @Published var inviteText = ""
     @Published var serverText: String
     @Published var email = ""
@@ -43,17 +44,27 @@ final class OnboardingModel: ObservableObject {
         run { await self.accountController.join(invitation) } onSuccess: { self.step = .profile }
     }
 
+    func signInWithGoogle() {
+        guard let server = enteredServer() else { return }
+        run { await self.accountController.signInWithGoogle(server: server) } onSuccess: { self.step = .profile }
+    }
+
     func requestCode() {
-        guard let server = URL(string: serverText), server.host != nil else {
-            problem = "Enter your team's Andon address, e.g. https://andon.yourteam.workers.dev"
-            return
-        }
+        guard let server = enteredServer() else { return }
         run { await self.accountController.requestCode(server: server, email: self.email) } onSuccess: { self.step = .code }
     }
 
     func verifyCode() {
         guard let server = URL(string: serverText) else { return }
         run { await self.accountController.verifyCode(server: server, email: self.email, code: self.code) } onSuccess: { self.step = .profile }
+    }
+
+    private func enteredServer() -> URL? {
+        guard let server = URL(string: serverText.trimmingCharacters(in: .whitespaces)), server.host != nil else {
+            problem = "Enter your team's Andon address, e.g. https://andon.yourteam.workers.dev"
+            return nil
+        }
+        return server
     }
 
     func show(_ newStep: Step) {
