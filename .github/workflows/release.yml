@@ -40,7 +40,7 @@ jobs:
           NOTARY_KEY_P8_BASE64: ${{ secrets.NOTARY_KEY_P8_BASE64 }}
           SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
           RELEASE_DOWNLOAD_PREFIX: https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/
-        run: scripts/build-release.sh
+        run: bash scripts/build-release.sh
       - uses: softprops/action-gh-release@72f2c25fcb47643c292f7107632f7a47c1df5cd8 # v2.3.2
         with:
           files: |
@@ -54,4 +54,4 @@ jobs:
           HOMEBREW_TAP: ${{ vars.HOMEBREW_TAP }}
           VERSION: ${{ github.ref_name }}
           REPOSITORY: ${{ github.repository }}
-        run: scripts/update-homebrew-tap.sh
+        run: bash scripts/update-homebrew-tap.sh

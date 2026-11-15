@@ -16,5 +16,5 @@ cd "$TAP_DIR"
 git config user.name "andon-release"
 git config user.email "andon-release@users.noreply.github.com"
 git add Casks/andon.rb
-git commit -m "andon $MARKETING_VERSION"
+git -c commit.gpgsign=false commit -m "andon $MARKETING_VERSION"
 git push origin HEAD
