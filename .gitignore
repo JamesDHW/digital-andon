@@ -12,3 +12,11 @@ app/Andon.xcodeproj/
 app/Config/Local.xcconfig
 app/AndonKit/.build/
 .swiftpm/
+
+# Signing material: never commit
+certs/
+*.p12
+*.p8
+*.cer
+*.certSigningRequest
+sparkle-private.key
