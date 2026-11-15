@@ -4,7 +4,7 @@ import XCTest
 final class TeamStateTests: XCTestCase {
     func testAppliesLightsPresenceFollowsAndRemovals() throws {
         let state = Fixtures.helloState()
-        let green = state.applying(.light(Light(memberId: Fixtures.priya, colour: .green, topic: nil, since: 5)))
+        let green = state.applying(.light(Light(memberId: Fixtures.priya, colour: .green, status: nil, since: 5)))
         XCTAssertEqual(green.light(for: Fixtures.priya)?.colour, .green)
 
         let online = green.applying(.presence(memberID: Fixtures.priya, isOnline: true))
@@ -21,7 +21,7 @@ final class TeamStateTests: XCTestCase {
     func testDefaultsAMemberWithoutAStoredLightToGreenSinceTheyJoined() {
         let newcomer = Fixtures.member("Newcomer", joinedAt: 42)
         let state = Fixtures.emptyState.applying(.member(newcomer))
-        XCTAssertEqual(state.light(for: newcomer.id), Light(memberId: newcomer.id, colour: .green, topic: nil, since: 42))
+        XCTAssertEqual(state.light(for: newcomer.id), Light(memberId: newcomer.id, colour: .green, status: nil, since: 42))
     }
 
     func testIgnoresErrorsAndUnknownMessages() {
@@ -77,7 +77,6 @@ final class SupportTests: XCTestCase {
         let preferences = try JSONDecoder().decode(Preferences.self, from: Data(saved.utf8))
         XCTAssertEqual(preferences.notifications.red, .banner)
         XCTAssertEqual(preferences.notifications.reminderMinutes, 5)
-        XCTAssertEqual(preferences.prompts, .standard)
     }
 
     func testMakesInitialsFromUpToTwoWords() {
@@ -89,20 +88,24 @@ final class SupportTests: XCTestCase {
 final class LightPullTests: XCTestCase {
     private let green = Fixtures.light("Priya", .green, since: 1)
 
-    func testMatchesTheServersPullRule() {
-        let red = green.pulled(.red, topic: "Blocked", atMilliseconds: 10)
-        XCTAssertEqual(red, Fixtures.light("Priya", .red, since: 10, topic: "Blocked"))
-        XCTAssertEqual(red.pulled(.red, topic: nil, atMilliseconds: 20), red)
-        XCTAssertEqual(red.pulled(.red, topic: "Still blocked", atMilliseconds: 20).since, 10)
-        XCTAssertEqual(red.pulled(.amber, topic: nil, atMilliseconds: 30), Fixtures.light("Priya", .amber, since: 30))
-        XCTAssertEqual(red.pulled(.green, topic: "ignored", atMilliseconds: 40), Fixtures.light("Priya", .green, since: 40))
-        XCTAssertEqual(green.pulled(.green, topic: nil, atMilliseconds: 50), green)
+    func testANewColourStartsANewPeriodAndTheSameColourChangesNothing() {
+        let red = green.pulled(.red, atMilliseconds: 10)
+        XCTAssertEqual(red, Fixtures.light("Priya", .red, since: 10))
+        XCTAssertEqual(red.pulled(.red, atMilliseconds: 20), red)
     }
 
-    func testSwitchesOffWithoutATopicAndBackOnAsAFreshGreen() {
-        let off = Fixtures.light("Priya", .red, since: 1, topic: "Blocked").pulled(.off, topic: "ignored", atMilliseconds: 10)
-        XCTAssertEqual(off, Fixtures.light("Priya", .off, since: 10))
-        XCTAssertEqual(off.pulled(.green, topic: nil, atMilliseconds: 20), Fixtures.light("Priya", .green, since: 20))
+    func testKeepsTheStatusThroughAmberRedAndOffAndClearsItOnGreen() {
+        let amber = green.pulled(.amber, atMilliseconds: 10).withStatus("Pairing on the migration")
+        let off = amber.pulled(.red, atMilliseconds: 20).pulled(.off, atMilliseconds: 30)
+        XCTAssertEqual(off, Fixtures.light("Priya", .off, since: 30, status: "Pairing on the migration"))
+        XCTAssertEqual(off.pulled(.green, atMilliseconds: 40), Fixtures.light("Priya", .green, since: 40))
+    }
+
+    func testSetsAStatusOnAnyColourAsTheServerStoresIt() {
+        XCTAssertEqual(green.withStatus("  Deep\n work  ").status, "Deep work")
+        XCTAssertNil(green.withStatus("Busy").withStatus("   ").status)
+        XCTAssertEqual(green.withStatus(String(repeating: "x", count: 500)).status?.count, 140)
+        XCTAssertEqual(green.withStatus("Busy").since, green.since)
     }
 
     func testBreathesOnlyWhenRedForTenMinutes() {

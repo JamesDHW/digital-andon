@@ -4,8 +4,6 @@ import SwiftUI
 /// The menu bar dropdown: whoever is stopped first, then everyone else you follow, then your own light.
 struct DropdownView: View {
     @ObservedObject var teamStore: TeamStore
-    @ObservedObject var preferencesStore: PreferencesStore
-    @ObservedObject var cycler: LightCycler
     let actions: AndonActions
 
     @State private var isClearExpanded = false
@@ -21,7 +19,7 @@ struct DropdownView: View {
                 }
             }
             Divider()
-            OwnLightControl(model: teamStore.state.map(DropdownModel.make(state:)) ?? .empty, pendingColour: cycler.pendingColour, actions: actions)
+            OwnLightControl(model: teamStore.state.map(DropdownModel.make(state:)) ?? .empty, actions: actions)
             Divider()
             footer
         }
@@ -52,12 +50,6 @@ struct DropdownView: View {
 
     private var footer: some View {
         HStack {
-            Toggle("Colours only", isOn: Binding(
-                get: { preferencesStore.preferences.notifications.isColoursOnly },
-                set: { isColoursOnly in actions.setColoursOnly(isColoursOnly) }
-            ))
-            .toggleStyle(.checkbox)
-            .help("No banners or sounds — just the lights")
             Spacer()
             Button("Settings…", action: actions.openSettings)
             Button("Quit", action: actions.quit)

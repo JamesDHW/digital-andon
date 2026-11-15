@@ -16,6 +16,8 @@ final class TeamStore: ObservableObject {
     private let realtime: RealtimeClient
     /// The last state seen, kept across reconnects so anything that happened while asleep is still announced.
     private var lastKnownState: TeamState?
+    /// Your light as you've just set it, shown here (over anything the server says) until it has been sent.
+    private var localLight: Light?
 
     init(realtime: RealtimeClient) {
         self.realtime = realtime
@@ -32,14 +34,26 @@ final class TeamStore: ObservableObject {
         realtime.disconnect()
         state = nil
         lastKnownState = nil
+        localLight = nil
     }
 
-    /// Pulls show immediately in the menu bar; the server's echo then replaces the guess.
-    func pull(_ colour: Colour, topic: String?) {
-        if let state, let current = state.light(for: state.you) {
-            replaceState(state.applying(.light(current.pulled(colour, topic: topic, atMilliseconds: Date().timeIntervalSince1970 * 1000))))
-        }
-        send(.pull(colour, topic: topic))
+    var yourLight: Light? {
+        guard let state else { return nil }
+        return state.light(for: state.you)
+    }
+
+    /// Shows a change to your light at once, before it's sent.
+    func showYourLight(_ light: Light) {
+        localLight = light
+        guard let state else { return }
+        replaceState(state.applying(.light(light)))
+    }
+
+    /// The change has been sent (or undone): the server's word counts again. Pass a light to show it straight away.
+    func settleYourLight(showing light: Light?) {
+        localLight = nil
+        guard let light, let state else { return }
+        replaceState(state.applying(.light(light)))
     }
 
     func send(_ message: ClientMessage) {
@@ -54,13 +68,18 @@ final class TeamStore: ObservableObject {
     private func apply(_ message: ServerMessage) {
         switch message {
         case let .hello(hello):
-            replaceState(TeamState(hello: hello))
+            replaceState(withLocalLight(TeamState(hello: hello)))
         case let .error(_, problem):
             lastProblem = problem
         case .light, .presence, .member, .memberRemoved, .follows, .unknown:
             guard let state else { return }
-            replaceState(state.applying(message))
+            replaceState(withLocalLight(state.applying(message)))
         }
+    }
+
+    private func withLocalLight(_ newState: TeamState) -> TeamState {
+        guard let localLight, localLight.memberId == newState.you else { return newState }
+        return newState.applying(.light(localLight))
     }
 
     private func replaceState(_ newState: TeamState) {

@@ -9,9 +9,8 @@ final class StatusItemController: NSObject, NSPopoverDelegate {
     private let statusItem: NSStatusItem
     private let popover: NSPopover
     private let teamStore: TeamStore
-    private let cycler: LightCycler
     private let avatarCache = AvatarImageCache()
-    private var inputs = MenuBarInputs(state: nil, connection: .signedOut, pendingColour: nil)
+    private var inputs = MenuBarInputs(state: nil, connection: .signedOut)
     private var model = MenuBarModel.make(state: nil, connection: .signedOut)
     private let highDynamicRangeView: HighDynamicRangeImageView
     private var pulseTimer: Timer?
@@ -21,9 +20,8 @@ final class StatusItemController: NSObject, NSPopoverDelegate {
     private var subscriptions = Set<AnyCancellable>()
     private var appearanceObservation: NSKeyValueObservation?
 
-    init(teamStore: TeamStore, cycler: LightCycler, dropdown: DropdownView) {
+    init(teamStore: TeamStore, dropdown: DropdownView) {
         self.teamStore = teamStore
-        self.cycler = cycler
         self.statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         self.popover = NSPopover()
         self.highDynamicRangeView = HighDynamicRangeImageView(frame: .zero)
@@ -82,10 +80,10 @@ final class StatusItemController: NSObject, NSPopoverDelegate {
 
     private func observeChanges() {
         teamStore.$state
-            .combineLatest(teamStore.$connection, cycler.$pendingColour)
+            .combineLatest(teamStore.$connection)
             .receive(on: RunLoop.main)
-            .sink { [weak self] state, connection, pendingColour in
-                self?.inputs = MenuBarInputs(state: state, connection: connection, pendingColour: pendingColour)
+            .sink { [weak self] state, connection in
+                self?.inputs = MenuBarInputs(state: state, connection: connection)
                 self?.refreshModel()
             }
             .store(in: &subscriptions)
@@ -101,7 +99,7 @@ final class StatusItemController: NSObject, NSPopoverDelegate {
     }
 
     private func refreshModel() {
-        let newModel = MenuBarModel.make(state: inputs.state, connection: inputs.connection, pendingOwnColour: inputs.pendingColour, now: Date())
+        let newModel = MenuBarModel.make(state: inputs.state, connection: inputs.connection, now: Date())
         guard newModel != model else { return }
         model = newModel
         updatePulsing()
@@ -175,5 +173,4 @@ final class StatusItemController: NSObject, NSPopoverDelegate {
 private struct MenuBarInputs {
     let state: TeamState?
     let connection: ConnectionState
-    let pendingColour: Colour?
 }

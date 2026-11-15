@@ -15,6 +15,11 @@ enum MenuBarPalette {
     static let dimmedAlpha: CGFloat = 0.35
     /// Display P3 is gamma-encoded (≈2.2), so a linear brightness boost is applied as its 1/2.2 power.
     private static let displayGamma: CGFloat = 2.2
+    /// XDR screens report up to 16× headroom, but often can't deliver it at the current brightness and clip
+    /// instead. Asking for at most this much keeps the boost within what they actually show.
+    private static let maximumBoost: CGFloat = 3
+    /// Channels at least this strong carry the colour and are lifted; weaker ones keep their normal value.
+    private static let strongChannel: CGFloat = 0.5
     private static let avatarBackgrounds: [RGB] = [
         RGB(0.36, 0.29, 0.84), RGB(0.18, 0.49, 0.55), RGB(0.66, 0.34, 0.18),
         RGB(0.29, 0.42, 0.18), RGB(0.55, 0.25, 0.45), RGB(0.22, 0.36, 0.62),
@@ -63,12 +68,15 @@ enum MenuBarPalette {
     }
 
     /// Components above 1 are only meaningful in an extended colour space; they mean "brighter than white".
+    /// Only a colour's strong channels are lifted. Lifting all three made red wash out to peach wherever the
+    /// screen clipped the red channel and let green and blue keep rising; this way a clipped red is still red.
     private static func boosted(_ components: RGB, brightness: CGFloat) -> NSColor {
         guard brightness > 1, let extendedSpace = CGColorSpace(name: CGColorSpace.extendedDisplayP3).flatMap(NSColorSpace.init(cgColorSpace:)) else {
             return displayP3(components)
         }
-        let encodedBoost = pow(brightness, 1 / displayGamma)
-        let boostedComponents = [components.red * encodedBoost, components.green * encodedBoost, components.blue * encodedBoost, 1]
+        let encodedBoost = pow(min(brightness, maximumBoost), 1 / displayGamma)
+        let lift = { (component: CGFloat) in component >= strongChannel ? component * encodedBoost : component }
+        let boostedComponents = [lift(components.red), lift(components.green), lift(components.blue), 1]
         return NSColor(colorSpace: extendedSpace, components: boostedComponents, count: boostedComponents.count)
     }
 }

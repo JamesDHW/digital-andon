@@ -26,7 +26,7 @@ struct NotificationSettingsView: View {
                 }
             }
             .disabled(preferencesStore.preferences.notifications.isColoursOnly)
-            Text("Andon also respects your Mac's Focus modes.")
+            Text("Digital Andon also respects your Mac's Focus modes.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }

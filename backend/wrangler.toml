@@ -14,18 +14,14 @@ class_name = "TeamObject"
 tag = "v1"
 new_sqlite_classes = ["TeamObject"]
 
-[[r2_buckets]]
-binding = "AVATARS"
-bucket_name = "andon-avatars"
-
 [vars]
 TEAM_NAME = "Theodo"
 # Comma-separated. People on these domains can join with Google on their own; admins can change it on /admin.
 # Empty: nobody joins on their own, and invites may go to any domain. Example: "theodo.co.uk,theodo.com"
 ALLOWED_EMAIL_DOMAINS = "theodo.com,theodo.co.uk,ext.theodo.com"
-EMAIL_FROM = "Andon <andon@example.com>"
-# Set after the first release, e.g. https://github.com/<org>/digital-andon/releases/latest/download/Andon.dmg
-DOWNLOAD_URL = "https://github.com/JamesDHW/digital-andon/releases/latest/download/Andon.dmg"
+EMAIL_FROM = "Digital Andon <andon@example.com>"
+# Set after the first release, e.g. https://github.com/<org>/digital-andon/releases/latest/download/Digital-Andon.dmg
+DOWNLOAD_URL = "https://github.com/JamesDHW/digital-andon/releases/latest/download/Digital-Andon.dmg"
 # Leave empty to use the request's own origin.
 PUBLIC_ORIGIN = ""
 # The Web application OAuth client from Google Cloud Console; its secret is GOOGLE_CLIENT_SECRET. Empty turns Google sign-in off.

@@ -11,7 +11,7 @@ const lightRowSchema = z
   .transform((row): Light => ({
     memberId: row.member_id,
     colour: row.colour,
-    topic: row.topic,
+    status: row.topic,
     since: row.since,
   }));
 
@@ -24,7 +24,7 @@ export const createSqlLightStore = (sql: SqlExecutor): LightStore => ({
       `INSERT OR REPLACE INTO lights (${LIGHT_COLUMNS}) VALUES (?, ?, ?, ?)`,
       light.memberId,
       light.colour,
-      light.topic,
+      light.status,
       light.since,
     ),
 });

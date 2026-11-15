@@ -1,18 +1,18 @@
-# Digital andon
+# Digital Andon
 
-A digital andon cord for a software team. Anyone can turn their light **amber** ("might need help") or **red** ("stopped, need help now") from a keyboard shortcut. The people who follow them see it straight away in their Mac menu bar, and someone goes to help. Everything is logged, so you can see how long people stay stopped and how long it takes to get unblocked.
+A digital andon cord for a software team. Anyone can turn their light **amber** ("might need help") or **red** ("stopped, need help now") from the menu bar or a keyboard shortcut. The people who follow them see it straight away in their Mac menu bar, and someone goes to help. Everything is logged, so you can see how long people stay stopped and how long it takes to get unblocked.
 
 ![Menu bar states](docs/menubar-preview.png)
 
-Your light is the squircle. After it comes one avatar per person you follow, whose ring is their light, most urgent first. There is no limit: past four people the avatars overlap. A red that has waited 10 minutes breathes. Off hides you everywhere: your squircle disappears, and you vanish from everyone else's bar. On XDR displays (recent MacBook Pros, Pro Display XDR) amber and red are drawn brighter than white; green stays at normal brightness. (Drawn at 8× from the same geometry the app uses.)
+Your light is the squircle. After it comes one avatar per person you follow, whose ring is their light, most urgent first. There is no limit: past four people the avatars overlap. Photos are everyone's Google profile picture. A red that has waited 10 minutes breathes. Off hides you everywhere: your squircle disappears, and you vanish from everyone else's bar. On XDR displays (recent MacBook Pros, Pro Display XDR) amber and red are drawn brighter than white; green stays at normal brightness. (Drawn at 8× from the same geometry the app uses.)
 
 | Shortcut | Does |
 |---|---|
-| ⌃⌥G | Clear (green): resolve |
-| ⌃⌥A / ⌃⌥R | Watch (amber) / Stop (red) instantly, no questions |
-| ⌃⌥⇧A / ⌃⌥⇧R | Watch / Stop with a one-line topic (Enter sends, Esc cancels) |
-| ⌃⌥↑ / ⌃⌥↓ | Step up (Clear → Watch → Stop → Clear) or down (Stop → Watch → Clear → Stop). Sent 10 s after your last press, so Stop ↓↓ is logged as one Stop → Clear |
+| ⌃⌥↑ / ⌃⌥↓ | Step your light up (Clear → Watch → Stop) or down (Stop → Watch → Clear) |
 | ⌃⌥O | Off (hidden from everyone) and back on |
+| ⌃⌥S | Set your status: one line saying what you're doing (Enter sets, empty clears, Esc cancels) |
+
+The dropdown has a button for each light too. Any change shows on your own screen at once and reaches the team once it has settled for 3 seconds, so Stop ↓↓ is sent as one Stop → Clear. Your status stays through Watch, Stop and Off, and clears when you go back to Clear.
 
 All shortcuts can be changed in Settings. By default only a red notifies, once, with one reminder after 10 minutes if they are still stopped. The banner goes away as soon as they leave red. "Colours only" turns every banner and sound off.
 
@@ -20,11 +20,11 @@ All shortcuts can be changed in Settings. By default only a red notifies, once, 
 
 ```
 backend/   Cloudflare Worker + one Durable Object per team (TypeScript, architecture-rules)
-  src/domain        pure decisions: pull the cord, topics
+  src/domain        pure decisions: pull the cord, statuses
   src/application   use cases over injected ports: socket commands, follows, invites, email codes, admin
   src/adapters      SQLite stores, Web Crypto, Resend/console email
   src/http          JSON endpoints        src/protocol  the socket contract shared with the app
-  src/runtime       Worker entry, Durable Object, WebSockets, R2 avatars (composition root)
+  src/runtime       Worker entry, Durable Object, WebSockets (composition root)
   public/           /admin (team admin page) and /join (invite landing page)
   scripts/          seed a local team, drive fake teammates
   test/             vitest against node:sqlite, the same SQLite dialect Durable Objects use
@@ -59,7 +59,7 @@ brew install xcodegen
 ```bash
 cd backend
 pnpm install
-pnpm dev                        # wrangler dev with DEV_MODE=true → http://localhost:8787 (Durable Object + R2 run locally)
+pnpm dev                        # wrangler dev with DEV_MODE=true → http://localhost:8787 (the Durable Object runs locally)
 # optional: cp .dev.vars.example .dev.vars to set BOOTSTRAP_ADMIN_EMAIL for trying the email sign-in flow
 ```
 
@@ -117,32 +117,31 @@ CI (`.github/workflows/ci.yml`) runs all three on every push and pull request.
 
 Use two Macs, or one Mac plus `pnpm fake-member`:
 
-1. **Install:** the dmg opens on a Mac that has never run Andon, with no Gatekeeper warning.
-2. **Join:** invite from `/admin`. The email arrives, its link opens the app, and you add a photo by dropping an image on the avatar. Your lead sees the photo within seconds.
-3. **Follow:** the inviter already follows the new person. Unfollow them (right-click their row), re-follow them from "Everyone else", then sign in on a second Mac by email code. The same follow list is there.
-4. **Instant pull:** ⌃⌥R. Within a second your squircle turns red, and your lead's bar shows your avatar ringed in red plus a banner.
+1. **Install:** the dmg opens on a Mac that has never run Digital Andon, with no Gatekeeper warning.
+2. **Join:** click **Continue with Google** with an account on an allowed domain. Your Google photo appears on your lead's bar within seconds.
+3. **Follow:** follow someone from "Everyone else", unfollow them (right-click their row), then sign in on a second Mac. The same follow list is there.
+4. **Stop:** click Stop in the dropdown. Your squircle turns red at once; about 3 seconds later your lead's bar shows your avatar ringed in red, plus a banner.
 5. **Breathing:** leave it red for 10 minutes. Your squircle and your avatar on the lead's bar start to breathe.
 6. **Reminder:** pull red again and ignore it. One reminder arrives after the configured time (set 2 minutes in Settings to test), and nothing after that.
-7. **Topic:** ⌃⌥⇧A, type, Enter. The lead sees the amber and its topic, and gets no banner.
-8. **Colours only:** switch it on in the dropdown. A red changes the bar but makes no banner.
+7. **Status:** ⌃⌥S, type, Enter. The lead sees it under your name. Go Off and back: it's still there. Go Clear: it's gone.
+8. **Colours only:** switch it on in Settings → Notifications. A red changes the bar but makes no banner.
 9. **Off:** ⌃⌥O. Your squircle disappears and you vanish from the lead's bar. ⌃⌥O again brings you back as Clear.
-10. **Resolve:** ⌃⌥G. Your ring turns green and the lead's banner is withdrawn, with no new notification.
+10. **Resolve:** ⌃⌥↓ until Clear. Your ring turns green and the lead's banner is withdrawn, with no new notification.
 11. **Offline:** close a lid while red for over a minute. The red stays on the lead's bar, and the Mac reconnects by itself when the lid opens.
 12. **Update:** tag a newer version. The running app offers it via Sparkle and relaunches.
-13. **Shortcuts:** remap ⌃⌥R in Settings. The new one works and survives a relaunch.
+13. **Shortcuts:** remap ⌃⌥S in Settings. The new one works and survives a relaunch.
 
 ---
 
 ## Deploying the backend (Cloudflare)
 
-A team is small, so it runs comfortably on the Workers free plan (Durable Objects with SQLite storage and R2 are included).
+A team is small, so it runs comfortably on the Workers free plan (Durable Objects with SQLite storage are included).
 
 One-time setup:
 
 ```bash
 cd backend
 pnpm exec wrangler login
-pnpm exec wrangler r2 bucket create andon-avatars
 pnpm exec wrangler secret put BOOTSTRAP_ADMIN_EMAIL   # your email: signing in with it makes you admin
 pnpm exec wrangler secret put GOOGLE_CLIENT_SECRET     # from the Google OAuth client below
 # edit wrangler.toml [vars]: GOOGLE_CLIENT_ID, ALLOWED_EMAIL_DOMAINS (e.g. "theodo.com")
@@ -153,12 +152,12 @@ Then open `https://andon.<your-subdomain>.workers.dev/admin/` and sign in with G
 
 **Google sign-in** needs no Google Workspace admin: an OAuth client in any Google Cloud project works for every Google account.
 
-1. In [Google Cloud Console](https://console.cloud.google.com/), create a project (e.g. "Andon").
-2. **Google Auth Platform → Branding:** app name "Andon", your email as support and developer contact. **Audience:** External, then **Publish app**. Only the basic `openid email profile` scopes are used, so Google doesn't review it.
+1. In [Google Cloud Console](https://console.cloud.google.com/), create a project (e.g. "Digital Andon").
+2. **Google Auth Platform → Branding:** app name "Digital Andon", your email as support and developer contact. **Audience:** External, then **Publish app**. Only the basic `openid email profile` scopes are used, so Google doesn't review it.
 3. **Clients → Create client:** type **Web application**, authorised redirect URI `https://andon.<your-subdomain>.workers.dev/auth/google/callback` (add `http://localhost:8787/auth/google/callback` for local development).
 4. Put the client ID in `wrangler.toml` as `GOOGLE_CLIENT_ID` and the secret in `wrangler secret put GOOGLE_CLIENT_SECRET`.
 
-Anyone whose verified Google email is on an allowed domain can then join on their own, from the app or the admin page, with their Google name and photo. If a company's Workspace blocks unknown apps, its admin has to allow this client; otherwise nothing is needed.
+Anyone whose verified Google email is on an allowed domain can then join on their own, from the app or the admin page, with their Google name and photo. Photos always come from Google and are refreshed at each sign-in; people can change their name in Settings, not their photo. If a company's Workspace blocks unknown apps, its admin has to allow this client; otherwise nothing is needed.
 
 **Fallbacks:** invite links (from `/admin`) and 6-digit email codes still work. Codes are sent through [Resend](https://resend.com) if `RESEND_API_KEY` is set (with `EMAIL_FROM` on a domain verified there); without it they only appear in `wrangler tail`.
 
@@ -179,7 +178,7 @@ Non-technical people install from a dmg, so it must be signed and notarised; Hom
 3. **`app/Config/Andon.xcconfig`:** set `ANDON_BUNDLE_ID` (e.g. `uk.co.theodo.andon`), `DEVELOPMENT_TEAM`, `ANDON_DEFAULT_SERVER` (your Worker URL), `ANDON_APPCAST_URL` (`https:/$()/github.com/<org>/digital-andon/releases/latest/download/appcast.xml`) and `ANDON_SPARKLE_PUBLIC_KEY`.
 4. **GitHub secrets** (environment `release`): `APPLE_CERTIFICATE_P12_BASE64` (`base64 -i cert.p12 | pbcopy`), `APPLE_CERTIFICATE_PASSWORD`, `APPLE_TEAM_ID`, `NOTARY_KEY_ID`, `NOTARY_ISSUER_ID`, `NOTARY_KEY_P8_BASE64`, `SPARKLE_PRIVATE_KEY`.
 5. **Optional Homebrew tap:** create `<org>/homebrew-tap`, then set repository variable `HOMEBREW_TAP=<org>/homebrew-tap` and secret `HOMEBREW_TAP_TOKEN` (a fine-grained token with contents write on that repo only).
-6. Set `DOWNLOAD_URL` in `backend/wrangler.toml` to `https://github.com/<org>/digital-andon/releases/latest/download/Andon.dmg`, so `https://andon.<…>.workers.dev/download` always serves the latest version.
+6. Set `DOWNLOAD_URL` in `backend/wrangler.toml` to `https://github.com/<org>/digital-andon/releases/latest/download/Digital-Andon.dmg`, so `https://andon.<…>.workers.dev/download` always serves the latest version.
 
 ### Each release
 
@@ -188,18 +187,18 @@ git tag v0.1.0
 git push origin v0.1.0
 ```
 
-`release.yml` builds, signs with hardened runtime, makes `Andon.dmg`, notarises and staples it, writes `appcast.xml`, attaches both to a GitHub release, and updates the tap. Check the result on a clean Mac:
+`release.yml` builds, signs with hardened runtime, makes `Digital-Andon.dmg`, notarises and staples it, writes `appcast.xml`, attaches both to a GitHub release, and updates the tap. Check the result on a clean Mac:
 
 ```bash
-spctl --assess --type open --context context:primary-signature -v Andon.dmg   # "accepted, source=Notarized Developer ID"
+spctl --assess --type open --context context:primary-signature -v Digital-Andon.dmg   # "accepted, source=Notarized Developer ID"
 ```
 
 `scripts/build-release.sh` runs the same steps locally on a Mac when the same variables are exported.
 
 ### How the team installs it
 
-- **Everyone:** open `https://andon.<…>.workers.dev/download`, drag Andon to Applications, open it and click **Continue with Google**. Updates arrive automatically.
-- **Developers, optionally:** `brew install --cask <org>/tap/andon`.
+- **Everyone:** open `https://andon.<…>.workers.dev/download`, drag Digital Andon to Applications, open it and click **Continue with Google**. Updates arrive automatically.
+- **Developers, optionally:** `brew install --cask <org>/tap/digital-andon`.
 
 ---
 
@@ -211,7 +210,7 @@ spctl --assess --type open --context context:primary-signature -v Andon.dmg   # 
 ```bash
 curl -X POST https://andon.<…>.workers.dev/api/pull \
   -H "authorization: Bearer $ANDON_API_KEY" -H "content-type: application/json" \
-  -d '{"memberId":"<member id>","colour":"red","topic":"main is failing"}'
+  -d '{"memberId":"<member id>","colour":"red","status":"main is failing"}'
 ```
 
 A good pattern is a "CI" member, invited like anyone else, that leads follow.
@@ -219,6 +218,6 @@ A good pattern is a "CI" member, invited like anyone else, that leads follow.
 ## Troubleshooting
 
 - **The lights are grey and faint:** the app isn't connected. The dropdown says why, and it reconnects with back-off, immediately after the Mac wakes.
-- **No banners:** check System Settings → Notifications → Andon, and that "Colours only" is off. Andon also respects Focus.
-- **A shortcut does nothing:** another app may own it. Remap it in Andon Settings → Menu bar and keys.
+- **No banners:** check System Settings → Notifications → Digital Andon, and that "Colours only" is off in Settings → Notifications. Digital Andon also respects Focus.
+- **A shortcut does nothing:** another app may own it. Remap it in Digital Andon Settings → Shortcuts.
 - **"Sign in again":** the device was removed by an admin, or its token was revoked. Use the email code to sign back in.

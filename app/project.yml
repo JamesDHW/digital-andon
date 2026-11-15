@@ -42,7 +42,7 @@ targets:
       - package: Sparkle
     settings:
       base:
-        PRODUCT_NAME: Andon
+        PRODUCT_NAME: Digital Andon
         PRODUCT_BUNDLE_IDENTIFIER: $(ANDON_BUNDLE_ID)
         INFOPLIST_FILE: Andon/Resources/Info.plist
         CODE_SIGN_ENTITLEMENTS: Andon/Resources/Andon.entitlements

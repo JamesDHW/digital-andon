@@ -23,15 +23,15 @@ const main = async (): Promise<void> => {
 };
 
 const parseCommand = (commandName: string, argument: string): FakeCommand => {
-  const topic = argument.length > 0 ? argument : undefined;
+  const status = argument.length > 0 ? argument : undefined;
   switch (commandName) {
     case "green":
     case "amber":
     case "red":
     case "off":
-      return { kind: "send", message: { type: "pull", colour: commandName, topic } };
-    case "topic":
-      return { kind: "send", message: { type: "topic", topic: argument } };
+      return { kind: "send", message: { type: "pull", colour: commandName, status } };
+    case "status":
+      return { kind: "send", message: { type: "status", status: argument } };
     case "follow":
     case "unfollow":
       return { kind: "sendToMember", type: commandName, memberName: argument };

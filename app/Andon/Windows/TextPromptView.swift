@@ -1,7 +1,7 @@
 import AndonKit
 import SwiftUI
 
-/// Spotlight-style: Enter submits (an empty answer still pulls the light, without a topic); Esc cancels.
+/// Spotlight-style: Enter submits (an empty answer clears your status); Esc cancels.
 struct TextPromptView: View {
     let prompt: TextPrompt
     let onSubmit: (String) -> Void
@@ -34,7 +34,7 @@ struct TextPromptView: View {
                 .focused($isFieldFocused)
                 .onSubmit(submit)
             HStack {
-                Text("Optional · Enter with nothing typed still works").foregroundStyle(.secondary)
+                Text("Leave it empty to clear your status. Going Clear clears it too.").foregroundStyle(.secondary)
                 Spacer()
                 KeyHint(key: "esc", action: "cancel")
                 KeyHint(key: "↩", action: prompt.submitLabel)

@@ -1,6 +1,6 @@
 import AndonKit
 
-/// A one-line question: the topic for Watch or Stop, or what unblocked you.
+/// A one-line question, shown Spotlight-style: today only your status.
 struct TextPrompt: Equatable {
     let colour: Colour
     let title: String
@@ -8,21 +8,13 @@ struct TextPrompt: Equatable {
     let initialText: String
     let submitLabel: String
 
-    static func topic(for colour: Colour, current: String?) -> TextPrompt {
+    static func status(colour: Colour, current: String?) -> TextPrompt {
         TextPrompt(
             colour: colour,
-            title: colour == .red ? "Stop — what's blocked you?" : "Watch — what might you need help with?",
-            placeholder: colour == .red ? "Prod deploy blocked by a failing migration" : "Unsure about the API shape for exports",
+            title: "What are you doing?",
+            placeholder: colour == .red ? "Prod deploy blocked by a failing migration" : "Pairing with Tom on the export API",
             initialText: current ?? "",
-            submitLabel: colour == .red ? "pull red" : "pull amber"
+            submitLabel: "set status"
         )
     }
-
-    static let resolutionNote = TextPrompt(
-        colour: .green,
-        title: "Clear again — what unblocked you?",
-        placeholder: "Paired with Tom on the migration",
-        initialText: "",
-        submitLabel: "save note"
-    )
 }

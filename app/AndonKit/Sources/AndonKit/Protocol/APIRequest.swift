@@ -22,15 +22,6 @@ public enum APIRequest {
         json("PUT", session.server, "/me/follows", token: session.deviceToken, body: ["memberIds": memberIDs])
     }
 
-    public static func uploadAvatar(_ session: AccountSession, image: Data, contentType: String) -> URLRequest {
-        var request = URLRequest(url: session.server.appendingPathComponent("me/avatar"))
-        request.httpMethod = "PUT"
-        request.setValue("Bearer \(session.deviceToken)", forHTTPHeaderField: "Authorization")
-        request.setValue(contentType, forHTTPHeaderField: "Content-Type")
-        request.httpBody = image
-        return request
-    }
-
     public static func socket(_ session: AccountSession) -> URLRequest? {
         guard let socketURL = session.socketURL else { return nil }
         var request = URLRequest(url: socketURL)
@@ -52,12 +43,11 @@ public enum APIRequest {
     }
 }
 
+/// Only your name can be changed: photos always come from Google.
 public struct ProfileChange: Codable, Equatable, Sendable {
-    public let name: String?
-    public let avatarUrl: String?
+    public let name: String
 
-    public init(name: String?, avatarUrl: String?) {
+    public init(name: String) {
         self.name = name
-        self.avatarUrl = avatarUrl
     }
 }

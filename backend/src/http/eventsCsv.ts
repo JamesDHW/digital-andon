@@ -8,11 +8,9 @@ const toCsvRow = (event: RecordedEvent): readonly string[] => {
   const at = new Date(event.at).toISOString();
   switch (event.kind) {
     case "pull":
-      return [String(event.id), at, event.kind, event.memberId, event.colour, event.topic ?? "", event.source, ""];
-    case "topic":
-      return [String(event.id), at, event.kind, event.memberId, "", event.topic ?? "", "", ""];
-    case "note":
-      return [String(event.id), at, event.kind, event.memberId, "", "", "", event.note];
+      return [String(event.id), at, event.kind, event.memberId, event.colour, event.status ?? "", event.source];
+    case "status":
+      return [String(event.id), at, event.kind, event.memberId, "", event.status ?? "", ""];
     default:
       return event satisfies never;
   }

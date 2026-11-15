@@ -7,13 +7,13 @@ public struct Light: Codable, Equatable, Sendable {
 
     public let memberId: MemberID
     public let colour: Colour
-    public let topic: String?
+    public let status: String?
     public let since: Double
 
-    public init(memberId: MemberID, colour: Colour, topic: String?, since: Double) {
+    public init(memberId: MemberID, colour: Colour, status: String?, since: Double) {
         self.memberId = memberId
         self.colour = colour
-        self.topic = topic
+        self.status = status
         self.since = since
     }
 
@@ -25,6 +25,6 @@ public struct Light: Codable, Equatable, Sendable {
     }
 
     public static func initial(for member: Member) -> Light {
-        Light(memberId: member.id, colour: .green, topic: nil, since: member.joinedAt)
+        Light(memberId: member.id, colour: .green, status: nil, since: member.joinedAt)
     }
 }

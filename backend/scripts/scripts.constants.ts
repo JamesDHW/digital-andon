@@ -10,10 +10,10 @@ export const FAKE_MEMBER_USAGE = `Usage: pnpm fake-member <name> <command> [argu
 
 Commands:
   green                 resolve
-  amber [topic]         pull amber, optionally with a topic
-  red [topic]           pull red, optionally with a topic
+  amber [status]        pull amber, optionally with a status
+  red [status]          pull red, optionally with a status
   off                   stop working: disappear from everyone's menu bar
-  topic <text>          change the topic of the current light
+  status <text>         set your status, whatever the colour
   follow <name>         follow someone
   unfollow <name>       stop following someone
   watch                 print every message until Ctrl-C`;

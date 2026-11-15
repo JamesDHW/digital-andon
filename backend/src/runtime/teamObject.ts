@@ -11,7 +11,6 @@ import { toEveryone } from "../protocol/serverMessage.js";
 import { acceptTeamSocket } from "./acceptTeamSocket.js";
 import { readDeploymentConfiguration, type AndonEnvironment } from "./andonEnvironment.js";
 import { createTeamDependencies } from "./createTeamDependencies.js";
-import { createR2AvatarStore } from "./r2AvatarStore.js";
 import { LOCAL_ORIGIN, NORMAL_CLOSURE_CODE, RESERVED_CLOSE_CODES, SOCKET_PING, SOCKET_PONG } from "./runtime.constants.js";
 import { deliverToSockets, hasOtherOpenSocket, onlineMemberIds, sendError, socketMemberId } from "./teamSockets.js";
 
@@ -32,7 +31,7 @@ export class TeamObject extends DurableObject<AndonEnvironment> {
     if (url.pathname === "/ws") return acceptTeamSocket(this.ctx, dependencies, request);
 
     const isDevelopmentMode = readDeploymentConfiguration(this.env).isDevelopmentMode;
-    const outcome = await routeRequest({ request, url, dependencies, avatars: createR2AvatarStore(this.env.AVATARS), isDevelopmentMode });
+    const outcome = await routeRequest({ request, url, dependencies, isDevelopmentMode });
     await discardUnreadBody(request);
     deliverToSockets(this.ctx, outcome.deliveries);
     return outcome.response;

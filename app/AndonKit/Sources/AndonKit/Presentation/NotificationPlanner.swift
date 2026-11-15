@@ -4,7 +4,7 @@ public struct Announcement: Equatable, Sendable {
     public let memberID: MemberID
     public let memberName: String
     public let colour: Colour
-    public let topic: String?
+    public let status: String?
     public let style: AlertStyle
     /// Minutes until one follow-up reminder, for reds only; cancelled as soon as they leave red.
     public let reminderMinutes: Int?
@@ -34,12 +34,12 @@ public enum NotificationPlanner {
 
         let reminderMinutes = light.colour == .red && preferences.reminderMinutes > 0 ? preferences.reminderMinutes : nil
         let announcement = Announcement(
-            memberID: memberID, memberName: member.name, colour: light.colour, topic: light.topic, style: style, reminderMinutes: reminderMinutes
+            memberID: memberID, memberName: member.name, colour: light.colour, status: light.status, style: style, reminderMinutes: reminderMinutes
         )
         return withdrawals + [.announce(announcement)]
     }
 
-    /// A new period (a colour change or a fresh pull) is announced; topic edits are not.
+    /// A new period (a colour change or a fresh pull) is announced; status edits are not.
     /// Going green only counts after amber or red, never when someone simply switches on.
     /// On first connect there is no previous state: only reds are announced.
     private static func isAnnounceable(previous: Light?, current: Light) -> Bool {

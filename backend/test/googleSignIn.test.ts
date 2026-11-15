@@ -54,7 +54,7 @@ describe("Google sign-in", () => {
     expect(expectSuccess(await authenticateDevice(team.dependencies, signedIn.deviceToken))).toMatchObject({ role: "admin" });
   });
 
-  it("signs in an existing member, adding their Google photo only if they have none", async () => {
+  it("signs in an existing member and always takes their current Google photo", async () => {
     const team = createTestTeam({ allowedDomains: ["example.com"] });
     const tom = addMember(team, "tom");
     const aisha = { ...addMember(team, "aisha"), avatarUrl: `${TEST_ORIGIN}/avatars/aisha.png` };
@@ -68,8 +68,10 @@ describe("Google sign-in", () => {
     });
 
     const aishaSignedIn = expectSuccess(await signInWithGoogle(team, { ...priyaAtTheodo, email: aisha.email }));
-    expect(expectSuccess(await authenticateDevice(team.dependencies, aishaSignedIn.deviceToken))).toMatchObject({ avatarUrl: aisha.avatarUrl });
-    expect(aishaSignedIn.deliveries).toEqual([]);
+    expect(expectSuccess(await authenticateDevice(team.dependencies, aishaSignedIn.deviceToken))).toMatchObject({ avatarUrl: priyaAtTheodo.pictureUrl });
+
+    const unchanged = expectSuccess(await signInWithGoogle(team, { ...priyaAtTheodo, email: aisha.email }));
+    expect(unchanged.deliveries).toEqual([]);
   });
 
   it("refuses an email Google hasn't verified", async () => {

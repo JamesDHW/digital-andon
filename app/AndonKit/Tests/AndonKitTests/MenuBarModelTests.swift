@@ -14,7 +14,7 @@ final class MenuBarModelTests: XCTestCase {
         let state = Fixtures.team(names.map { Fixtures.light($0, .green, since: 1) } + [Fixtures.light("Stuck", .red, since: millisecondsAgo(minutes: 2))])
         let model = MenuBarModel.make(state: state, connection: .connected, now: now)
 
-        XCTAssertEqual(model.ownLight, OwnLightIndicator(colour: .green, isPending: false, isBreathing: false))
+        XCTAssertEqual(model.ownLight, OwnLightIndicator(colour: .green, isBreathing: false))
         XCTAssertEqual(model.people.count, 10)
         XCTAssertEqual(model.people.first?.member.name, "Stuck")
         XCTAssertFalse(model.isBreathing)
@@ -42,10 +42,10 @@ final class MenuBarModelTests: XCTestCase {
         XCTAssertTrue(model.isBreathing)
     }
 
-    func testShowsAPendingColourAsNotYetSentAndNotBreathing() {
+    func testYourOwnRedBreathesToo() {
         let state = Fixtures.team([], leadColour: .red)
-        let model = MenuBarModel.make(state: state, connection: .connected, pendingOwnColour: .green, now: now.addingTimeInterval(3_600))
-        XCTAssertEqual(model.ownLight, OwnLightIndicator(colour: .green, isPending: true, isBreathing: false))
+        let model = MenuBarModel.make(state: state, connection: .connected, now: now)
+        XCTAssertEqual(model.ownLight, OwnLightIndicator(colour: .red, isBreathing: true))
     }
 
     func testShowsNothingBeforeTheFirstHelloAndDimsWhileDisconnected() {

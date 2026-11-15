@@ -4,7 +4,7 @@ import { handleGoogleCallback, handleGoogleStart } from "./googleRoutes.js";
 import { MEMBER_PATH_PATTERN } from "./http.constants.js";
 import { respondOnly, type HttpContext, type HttpOutcome } from "./httpOutcome.js";
 import { notFoundResponse } from "./httpResponses.js";
-import { handleGetFollows, handleGetMe, handlePatchMe, handlePutAvatar, handlePutFollows } from "./meRoutes.js";
+import { handleGetFollows, handleGetMe, handlePatchMe, handlePutFollows } from "./meRoutes.js";
 import {
   handleGetSettings,
   handleListEvents,
@@ -34,8 +34,6 @@ export const routeRequest = async (context: HttpContext): Promise<HttpOutcome> =
       return handleGetMe(context);
     case "PATCH /me":
       return handlePatchMe(context);
-    case "PUT /me/avatar":
-      return handlePutAvatar(context);
     case "GET /me/follows":
       return handleGetFollows(context);
     case "PUT /me/follows":

@@ -61,7 +61,7 @@ final class OnboardingModel: ObservableObject {
 
     private func enteredServer() -> URL? {
         guard let server = URL(string: serverText.trimmingCharacters(in: .whitespaces)), server.host != nil else {
-            problem = "Enter your team's Andon address, e.g. https://andon.yourteam.workers.dev"
+            problem = "Enter your team's Digital Andon address, e.g. https://andon.yourteam.workers.dev"
             return nil
         }
         return server

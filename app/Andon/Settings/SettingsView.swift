@@ -16,7 +16,7 @@ struct SettingsView: View {
                 .tabItem { Label("Following", systemImage: "person.2") }
             NotificationSettingsView(preferencesStore: preferencesStore)
                 .tabItem { Label("Notifications", systemImage: "bell") }
-            ShortcutSettingsView(preferencesStore: preferencesStore)
+            ShortcutSettingsView()
                 .tabItem { Label("Shortcuts", systemImage: "keyboard") }
         }
         .frame(width: 480, height: 420)

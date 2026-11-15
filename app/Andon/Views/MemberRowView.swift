@@ -22,8 +22,8 @@ struct MemberRowView: View {
             )
             VStack(alignment: .leading, spacing: 2) {
                 Text(member.name).font(.system(size: 14, weight: .semibold))
-                if let topic = light.topic {
-                    Text(topic).font(.system(size: 13)).foregroundStyle(.primary.opacity(0.85)).lineLimit(2)
+                if let status = light.status {
+                    Text(status).font(.system(size: 13)).foregroundStyle(.primary.opacity(0.85)).lineLimit(2)
                 }
                 Text(MemberStatusText.describe(row, now: now)).font(.system(size: 12)).foregroundStyle(.secondary)
             }

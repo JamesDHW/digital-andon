@@ -7,7 +7,6 @@ import { DEFAULT_EMAIL_FROM, DEFAULT_TEAM_NAME } from "./runtime.constants.js";
 /** Bindings and variables declared in wrangler.toml and secrets. */
 export type AndonEnvironment = {
   readonly TEAM: DurableObjectNamespace;
-  readonly AVATARS: R2Bucket;
   readonly RESEND_API_KEY?: string;
   readonly EMAIL_FROM?: string;
   readonly BOOTSTRAP_ADMIN_EMAIL?: string;

@@ -3,19 +3,12 @@ import AppKit
 
 /// The marks in the status item: your squircle, a person's ringed avatar, and the placeholder.
 enum LightShapes {
-    /// Solid once sent; an outline while an arrow-shortcut change is still waiting to be sent.
+    /// A solid squircle, always: a change shows at once, even before it reaches the team.
     static func drawOwnLight(_ indicator: OwnLightIndicator, in rect: NSRect, rendering: LightRendering, alpha: CGFloat) {
         let colour = MenuBarPalette.fill(for: indicator.colour, rendering: rendering)
             .withAlphaComponent(alpha * breathingAlpha(isBreathing: indicator.isBreathing, rendering: rendering))
-        guard indicator.isPending else {
-            colour.setFill()
-            squircle(in: rect, inset: 0).fill()
-            return
-        }
-        let outline = squircle(in: rect, inset: MenuBarLayout.pendingOutlineWidth / 2)
-        outline.lineWidth = MenuBarLayout.pendingOutlineWidth
-        colour.setStroke()
-        outline.stroke()
+        colour.setFill()
+        squircle(in: rect, inset: 0).fill()
     }
 
     /// The ring carries the colour; inside it, their photo or initial. Anything already drawn to the left

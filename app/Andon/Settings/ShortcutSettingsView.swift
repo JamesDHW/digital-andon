@@ -2,24 +2,13 @@ import AndonKit
 import KeyboardShortcuts
 import SwiftUI
 
-/// Shortcuts work from any app. The plain ones pull instantly; the ⇧ ones ask for a topic first.
+/// Three things have shortcuts, and they work from any app: stepping your light, switching off, and your status.
 struct ShortcutSettingsView: View {
-    @ObservedObject var preferencesStore: PreferencesStore
-
     var body: some View {
         Form {
-            Section("Pull instantly") {
-                KeyboardShortcuts.Recorder("Clear (green):", name: .pullGreen)
-                KeyboardShortcuts.Recorder("Watch (amber):", name: .pullAmber)
-                KeyboardShortcuts.Recorder("Stop (red):", name: .pullRed)
-            }
-            Section("Pull with a topic") {
-                KeyboardShortcuts.Recorder("Watch with topic:", name: .pullAmberWithTopic)
-                KeyboardShortcuts.Recorder("Stop with topic:", name: .pullRedWithTopic)
-            }
-            Section("Step up or down (sent \(Int(AppConstants.cycleSendDelaySeconds)) s after the last press)") {
-                KeyboardShortcuts.Recorder("Step up (Clear → Watch → Stop → Clear):", name: .cycleUp)
-                KeyboardShortcuts.Recorder("Step down (Stop → Watch → Clear → Stop):", name: .cycleDown)
+            Section("Your light") {
+                KeyboardShortcuts.Recorder("Step up (Clear → Watch → Stop):", name: .cycleUp)
+                KeyboardShortcuts.Recorder("Step down (Stop → Watch → Clear):", name: .cycleDown)
             }
             Section("Off") {
                 KeyboardShortcuts.Recorder("Switch off and back on:", name: .toggleOff)
@@ -27,8 +16,11 @@ struct ShortcutSettingsView: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
-            Section("Prompts") {
-                Toggle("Ask what unblocked me when I go clear", isOn: $preferencesStore.preferences.prompts.asksForResolutionNote)
+            Section("Status") {
+                KeyboardShortcuts.Recorder("Set your status:", name: .editStatus)
+                Text("One line saying what you're doing. It stays until you change it or go back to Clear.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
         }
         .formStyle(.grouped)

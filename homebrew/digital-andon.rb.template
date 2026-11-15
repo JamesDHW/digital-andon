@@ -1,9 +1,9 @@
-cask "andon" do
+cask "digital-andon" do
   version "{{VERSION}}"
   sha256 "{{SHA256}}"
 
-  url "https://github.com/{{REPOSITORY}}/releases/download/v#{version}/Andon.dmg"
-  name "Andon"
+  url "https://github.com/{{REPOSITORY}}/releases/download/v#{version}/Digital-Andon.dmg"
+  name "Digital Andon"
   desc "Menu bar andon cord: see who on your team needs help"
   homepage "https://github.com/{{REPOSITORY}}"
 
@@ -15,7 +15,7 @@ cask "andon" do
   auto_updates true
   depends_on macos: ">= :sonoma"
 
-  app "Andon.app"
+  app "Digital Andon.app"
 
   zap trash: [
     "~/Library/Preferences/*.andon.plist",

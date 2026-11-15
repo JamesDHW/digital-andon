@@ -7,25 +7,23 @@ import { runStatement, selectRows, type SqlExecutor, type SqlValue } from "./sql
 
 const eventRowBase = { id: z.number(), member_id: memberIdSchema, at: z.number() };
 
+/** Statuses are stored in the column "topic", and older status events have the kind "topic": both are read as status. */
 const eventRowSchema = z.union([
   z.object({ ...eventRowBase, kind: z.literal("pull"), colour: colourSchema, topic: z.string().nullable(), source: z.enum(["app", "api"]) })
-    .transform((row): RecordedEvent => ({ id: row.id, kind: "pull", memberId: row.member_id, colour: row.colour, topic: row.topic, source: row.source, at: row.at })),
-  z.object({ ...eventRowBase, kind: z.literal("topic"), topic: z.string().nullable() })
-    .transform((row): RecordedEvent => ({ id: row.id, kind: "topic", memberId: row.member_id, topic: row.topic, at: row.at })),
-  z.object({ ...eventRowBase, kind: z.literal("note"), note: z.string() })
-    .transform((row): RecordedEvent => ({ id: row.id, kind: "note", memberId: row.member_id, note: row.note, at: row.at })),
+    .transform((row): RecordedEvent => ({ id: row.id, kind: "pull", memberId: row.member_id, colour: row.colour, status: row.topic, source: row.source, at: row.at })),
+  z.object({ ...eventRowBase, kind: z.enum(["status", "topic"]), topic: z.string().nullable() })
+    .transform((row): RecordedEvent => ({ id: row.id, kind: "status", memberId: row.member_id, status: row.topic, at: row.at })),
 ]);
 
-type EventColumns = readonly [kind: string, memberId: string, colour: SqlValue, topic: SqlValue, source: SqlValue, note: SqlValue, at: number];
+type EventColumns = readonly [kind: string, memberId: string, colour: SqlValue, status: SqlValue, source: SqlValue, at: number];
 
 export const createSqlEventStore = (sql: SqlExecutor): EventStore => ({
-  append: (event) =>
-    runStatement(sql, "INSERT INTO events (kind, member_id, colour, topic, source, note, at) VALUES (?, ?, ?, ?, ?, ?, ?)", ...toEventColumns(event)),
+  append: (event) => runStatement(sql, "INSERT INTO events (kind, member_id, colour, topic, source, at) VALUES (?, ?, ?, ?, ?, ?)", ...toEventColumns(event)),
   list: (query) =>
     selectRows(
       sql,
       eventRowSchema,
-      "SELECT id, kind, member_id, colour, topic, source, note, at FROM events WHERE id > ? AND kind IN ('pull', 'topic', 'note') ORDER BY id LIMIT ?",
+      "SELECT id, kind, member_id, colour, topic, source, at FROM events WHERE id > ? AND kind IN ('pull', 'status', 'topic') ORDER BY id LIMIT ?",
       query.afterId,
       query.limit,
     ),
@@ -34,11 +32,9 @@ export const createSqlEventStore = (sql: SqlExecutor): EventStore => ({
 const toEventColumns = (event: AndonEvent): EventColumns => {
   switch (event.kind) {
     case "pull":
-      return [event.kind, event.memberId, event.colour, event.topic, event.source, null, event.at];
-    case "topic":
-      return [event.kind, event.memberId, null, event.topic, null, null, event.at];
-    case "note":
-      return [event.kind, event.memberId, null, null, null, event.note, event.at];
+      return [event.kind, event.memberId, event.colour, event.status, event.source, event.at];
+    case "status":
+      return [event.kind, event.memberId, null, event.status, null, event.at];
     default:
       return event satisfies never;
   }

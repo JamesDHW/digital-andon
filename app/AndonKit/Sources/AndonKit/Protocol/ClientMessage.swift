@@ -1,10 +1,8 @@
 import Foundation
 
 public enum ClientMessage: Equatable, Sendable {
-    /// A nil topic keeps the current topic when the colour is unchanged.
-    case pull(Colour, topic: String?)
-    case topic(String)
-    case note(String)
+    /// Sends your whole light at once. The status is always sent, so a blank one clears it on the server.
+    case pull(Colour, status: String?)
     case follow(MemberID)
     case unfollow(MemberID)
 
@@ -15,22 +13,16 @@ public enum ClientMessage: Equatable, Sendable {
 
 extension ClientMessage: Encodable {
     private enum CodingKeys: String, CodingKey {
-        case type, colour, topic, memberId, note
+        case type, colour, status, memberId
     }
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         switch self {
-        case let .pull(colour, topic):
+        case let .pull(colour, status):
             try container.encode("pull", forKey: .type)
             try container.encode(colour, forKey: .colour)
-            try container.encodeIfPresent(topic, forKey: .topic)
-        case let .topic(topic):
-            try container.encode("topic", forKey: .type)
-            try container.encode(topic, forKey: .topic)
-        case let .note(note):
-            try container.encode("note", forKey: .type)
-            try container.encode(note, forKey: .note)
+            try container.encode(status ?? "", forKey: .status)
         case let .follow(memberID):
             try container.encode("follow", forKey: .type)
             try container.encode(memberID, forKey: .memberId)

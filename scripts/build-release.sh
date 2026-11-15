@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Builds a signed, notarised Andon.dmg and a Sparkle appcast in app/build/.
+# Builds a signed, notarised Digital-Andon.dmg and a Sparkle appcast in app/build/.
 # Runs in the release workflow; also works locally on a Mac with the same environment variables set.
 #
 # Required: VERSION (e.g. v0.2.0), APPLE_TEAM_ID, NOTARY_KEY_ID, NOTARY_ISSUER_ID,
@@ -57,22 +57,22 @@ xcodebuild -exportArchive -archivePath "$BUILD_DIR/Andon.xcarchive" \
   -exportOptionsPlist "$BUILD_DIR/ExportOptions.plist" -exportPath "$BUILD_DIR/export" -quiet
 
 echo "==> Building the disk image"
-cp -R "$BUILD_DIR/export/Andon.app" "$BUILD_DIR/dmg-staging/"
+cp -R "$BUILD_DIR/export/Digital Andon.app" "$BUILD_DIR/dmg-staging/"
 ln -s /Applications "$BUILD_DIR/dmg-staging/Applications"
-hdiutil create -volname "Andon" -srcfolder "$BUILD_DIR/dmg-staging" -ov -format UDZO "$BUILD_DIR/Andon.dmg"
-codesign --force --timestamp --sign "Developer ID Application" "$BUILD_DIR/Andon.dmg"
+hdiutil create -volname "Digital Andon" -srcfolder "$BUILD_DIR/dmg-staging" -ov -format UDZO "$BUILD_DIR/Digital-Andon.dmg"
+codesign --force --timestamp --sign "Developer ID Application" "$BUILD_DIR/Digital-Andon.dmg"
 
 echo "==> Notarising (this usually takes a few minutes)"
-xcrun notarytool submit "$BUILD_DIR/Andon.dmg" \
+xcrun notarytool submit "$BUILD_DIR/Digital-Andon.dmg" \
   --key "$NOTARY_KEY_PATH" --key-id "$NOTARY_KEY_ID" --issuer "$NOTARY_ISSUER_ID" --wait
-xcrun stapler staple "$BUILD_DIR/Andon.dmg"
-spctl --assess --type open --context context:primary-signature --verbose "$BUILD_DIR/Andon.dmg"
+xcrun stapler staple "$BUILD_DIR/Digital-Andon.dmg"
+spctl --assess --type open --context context:primary-signature --verbose "$BUILD_DIR/Digital-Andon.dmg"
 
 echo "==> Writing the Sparkle appcast"
 GENERATE_APPCAST="$(find "$DERIVED_DATA/SourcePackages/artifacts" -type f -name generate_appcast -path '*bin*' | head -1)"
-cp "$BUILD_DIR/Andon.dmg" "$BUILD_DIR/appcast-input/"
+cp "$BUILD_DIR/Digital-Andon.dmg" "$BUILD_DIR/appcast-input/"
 echo "$SPARKLE_PRIVATE_KEY" | "$GENERATE_APPCAST" --ed-key-file - \
   --download-url-prefix "$RELEASE_DOWNLOAD_PREFIX" -o "$BUILD_DIR/appcast.xml" "$BUILD_DIR/appcast-input"
 
-shasum -a 256 "$BUILD_DIR/Andon.dmg" | tee "$BUILD_DIR/Andon.dmg.sha256"
-echo "==> Done: $BUILD_DIR/Andon.dmg and $BUILD_DIR/appcast.xml"
+shasum -a 256 "$BUILD_DIR/Digital-Andon.dmg" | tee "$BUILD_DIR/Digital-Andon.dmg.sha256"
+echo "==> Done: $BUILD_DIR/Digital-Andon.dmg and $BUILD_DIR/appcast.xml"

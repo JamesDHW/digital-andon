@@ -8,7 +8,6 @@ enum MenuBarLayout {
     static let ownLightSide: CGFloat = 18
     /// About a third of the side, close to the continuous corners of a macOS app icon.
     static let ownLightCornerRadius: CGFloat = 5.5
-    static let pendingOutlineWidth: CGFloat = 2.5
     static let ownToPeopleGap: CGFloat = 5
     static let avatarDiameter: CGFloat = 20
     /// The thick ring in the person's light colour; it carries the signal, the photo says who.

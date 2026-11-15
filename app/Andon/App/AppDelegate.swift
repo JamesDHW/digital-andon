@@ -38,15 +38,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         self.notificationController = NotificationController()
         self.promptPresenter = promptPresenter
         self.windowPresenter = WindowPresenter()
-        self.actions = AndonActions(teamStore: teamStore, preferencesStore: preferencesStore, prompt: promptPresenter)
+        self.actions = AndonActions(teamStore: teamStore, prompt: promptPresenter)
         self.updater = UpdaterController(isConfigured: environment.hasUpdateFeed)
         super.init()
     }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.mainMenu = EditMenu.make()
-        let dropdown = DropdownView(teamStore: teamStore, preferencesStore: preferencesStore, cycler: actions.cycler, actions: actions)
-        let statusItemController = StatusItemController(teamStore: teamStore, cycler: actions.cycler, dropdown: dropdown)
+        let dropdown = DropdownView(teamStore: teamStore, actions: actions)
+        let statusItemController = StatusItemController(teamStore: teamStore, dropdown: dropdown)
         self.statusItemController = statusItemController
         wireActions(to: statusItemController)
         wireNotifications()
@@ -54,9 +54,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         followSession()
     }
 
-    /// A change made with the arrow shortcuts is sent rather than lost if Andon quits during the delay.
+    /// A change to your light still waiting to be sent goes out rather than being lost when the app quits.
     func applicationWillTerminate(_ notification: Notification) {
-        actions.sendPendingCycle()
+        actions.sendPendingChange()
     }
 
     /// andon://join links from the invite page.
@@ -105,7 +105,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func showSettings() {
-        windowPresenter.show(Self.settingsWindow, title: "Andon Settings") {
+        windowPresenter.show(Self.settingsWindow, title: "Digital Andon Settings") {
             SettingsView(accountController: accountController, teamStore: teamStore, preferencesStore: preferencesStore, actions: actions, updater: updater)
         }
     }
@@ -115,7 +115,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func showOnboarding() -> OnboardingModel {
         let model = onboardingModel ?? OnboardingModel(accountController: accountController, defaultServer: environment.defaultServer)
         onboardingModel = model
-        windowPresenter.show(Self.onboardingWindow, title: "Welcome to Andon") {
+        windowPresenter.show(Self.onboardingWindow, title: "Welcome to Digital Andon") {
             OnboardingView(model: model, teamStore: teamStore, accountController: accountController) { [weak self] in
                 self?.windowPresenter.close(Self.onboardingWindow)
                 self?.onboardingModel = nil

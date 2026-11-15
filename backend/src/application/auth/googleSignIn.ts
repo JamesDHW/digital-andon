@@ -60,7 +60,7 @@ export const takeSignInAttempt = async (dependencies: AuthDependencies, state: s
   return attempt;
 };
 
-/** Signs in an existing member, or lets someone on an allowed domain join on their own, with their Google photo. */
+/** Signs in an existing member, or lets someone on an allowed domain join on their own, with their Google name and photo. */
 export const completeGoogleSignIn = async (dependencies: AuthDependencies, attempt: SignInAttempt, code: string): Promise<GoogleSignedIn | AndonError> => {
   const google = requireGoogle(dependencies);
   if (google instanceof Error) return google;
@@ -127,10 +127,9 @@ const newcomerRole = (dependencies: AuthDependencies, email: string): MemberRole
   return "member";
 };
 
-/** Someone who never added a photo gets their Google one; a photo they chose is never replaced. */
+/** Photos always come from Google, refreshed at every sign-in so a changed Google photo reaches the team. */
 const withGooglePhoto = (dependencies: AuthDependencies, member: Member, pictureUrl: string | null): JoinedMember | AndonError => {
-  const keepsCurrentPhoto = member.avatarUrl !== null || pictureUrl === null;
-  if (keepsCurrentPhoto) return { member, deliveries: [] };
+  if (member.avatarUrl === pictureUrl) return { member, deliveries: [] };
 
   const updatedMember: Member = { ...member, avatarUrl: pictureUrl };
   const saved = dependencies.members.save(updatedMember);

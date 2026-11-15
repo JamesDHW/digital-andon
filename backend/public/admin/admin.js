@@ -156,7 +156,7 @@ const finishSignIn = async (token) => {
   const me = await api("GET", "/me");
   if (me.role !== "admin") {
     signOut();
-    showMessage("sign-in-message", "You're signed up. This page is for team admins: use the Andon app on your Mac.", true);
+    showMessage("sign-in-message", "You're signed up. This page is for team admins: use the Digital Andon app on your Mac.", true);
     return;
   }
   showMessage("sign-in-message", "");
@@ -233,7 +233,7 @@ element("rotate-key").addEventListener("click", async () => {
     element("api-key").value = apiKey;
     const example = element("api-example");
     example.hidden = false;
-    example.textContent = `curl -X POST ${location.origin}/api/pull \\\n  -H "authorization: Bearer ${apiKey}" \\\n  -H "content-type: application/json" \\\n  -d '{"memberId":"<member id>","colour":"red","topic":"CI failing on main"}'`;
+    example.textContent = `curl -X POST ${location.origin}/api/pull \\\n  -H "authorization: Bearer ${apiKey}" \\\n  -H "content-type: application/json" \\\n  -d '{"memberId":"<member id>","colour":"red","status":"CI failing on main"}'`;
   } catch (failure) {
     showMessage("console-message", failure.message, true);
   }

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Join Andon</title>
+<title>Join Digital Andon</title>
 <style>
   :root { color-scheme: light dark; --text: #1d1d1f; --muted: #6e6e73; --surface: #ffffff; --page: #f5f5f7; --accent: #0a84ff; --border: #d2d2d7; }
   @media (prefers-color-scheme: dark) { :root { --text: #f5f5f7; --muted: #a1a1a6; --surface: #1c1c1e; --page: #000000; --border: #38383a; } }
@@ -27,12 +27,12 @@
     <span style="background:#ffc7c7;border-color:#e03131"></span>
   </div>
   <h1>Join your team's andon board</h1>
-  <p id="status">Opening Andon…</p>
-  <a class="button primary" id="open" href="#">Open in Andon</a>
-  <a class="button secondary" href="/download">Download Andon for Mac</a>
+  <p id="status">Opening Digital Andon…</p>
+  <a class="button primary" id="open" href="#">Open in Digital Andon</a>
+  <a class="button secondary" href="/download">Download Digital Andon for Mac</a>
   <ol>
-    <li>Download and open Andon, then drag it to Applications.</li>
-    <li>Come back to this page and choose <strong>Open in Andon</strong>.</li>
+    <li>Download and open Digital Andon, then drag it to Applications.</li>
+    <li>Come back to this page and choose <strong>Open in Digital Andon</strong>.</li>
   </ol>
 </main>
 <script>
@@ -45,7 +45,7 @@
   } else {
     const appLink = "andon://join?server=" + encodeURIComponent(location.origin) + "&code=" + encodeURIComponent(code);
     openLink.href = appLink;
-    status.textContent = "If Andon didn't open, install it first, then choose Open in Andon.";
+    status.textContent = "If Digital Andon didn't open, install it first, then choose Open in Digital Andon.";
     location.href = appLink;
   }
 </script>

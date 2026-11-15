@@ -13,7 +13,7 @@ enum NotificationText {
 
     static func fallbackBody(for colour: Colour) -> String {
         switch colour {
-        case .red: return "Stopped and needs help. No topic given."
+        case .red: return "Stopped and needs help."
         case .amber: return "Might need help soon."
         case .green: return "Unblocked."
         case .off: return "Not working right now."

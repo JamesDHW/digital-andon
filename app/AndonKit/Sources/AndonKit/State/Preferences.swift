@@ -36,38 +36,24 @@ public struct NotificationPreferences: Codable, Equatable, Sendable {
     }
 }
 
-public struct PromptPreferences: Codable, Equatable, Sendable {
-    /// After going green, ask "what unblocked you?" (always skippable).
-    public var asksForResolutionNote: Bool
-
-    public static let standard = PromptPreferences(asksForResolutionNote: false)
-
-    public init(asksForResolutionNote: Bool) {
-        self.asksForResolutionNote = asksForResolutionNote
-    }
-}
-
 public struct Preferences: Equatable, Sendable {
     public var notifications: NotificationPreferences
-    public var prompts: PromptPreferences
 
-    public static let standard = Preferences(notifications: .standard, prompts: .standard)
+    public static let standard = Preferences(notifications: .standard)
 
-    public init(notifications: NotificationPreferences, prompts: PromptPreferences) {
+    public init(notifications: NotificationPreferences) {
         self.notifications = notifications
-        self.prompts = prompts
     }
 }
 
 /// Missing keys fall back to defaults, so preferences saved by an older version still load.
 extension Preferences: Codable {
     private enum CodingKeys: String, CodingKey {
-        case notifications, prompts
+        case notifications
     }
 
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         self.notifications = try container.decodeIfPresent(NotificationPreferences.self, forKey: .notifications) ?? .standard
-        self.prompts = try container.decodeIfPresent(PromptPreferences.self, forKey: .prompts) ?? .standard
     }
 }

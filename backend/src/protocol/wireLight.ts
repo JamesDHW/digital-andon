@@ -6,6 +6,6 @@ export type WireLight = Light;
 export const toWireLight = (light: Light): WireLight => ({
   memberId: light.memberId,
   colour: light.colour,
-  topic: light.topic,
+  status: light.status,
   since: light.since,
 });

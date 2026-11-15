@@ -18,7 +18,7 @@ export default defineArchitecture({
       },
     },
     domain: {
-      description: "Pure andon decisions: lights, topics, members and events. No I/O.",
+      description: "Pure andon decisions: lights, statuses, members and events. No I/O.",
       files: ["src/domain/**/*.ts"],
       dependencies: { internal: ["domain", "errors"] },
     },

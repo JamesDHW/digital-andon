@@ -41,7 +41,7 @@ enum StatusImageRenderer {
             let waiting = person.isBreathing ? ", waiting over 10 minutes" : ""
             return "\(person.member.name): \(LightNames.name(person.colour))\(waiting)."
         }
-        return (["Andon.", ownPart] + peopleParts).joined(separator: " ")
+        return (["Digital Andon.", ownPart] + peopleParts).joined(separator: " ")
     }
 
     private static func peopleOriginX(for model: MenuBarModel) -> CGFloat {

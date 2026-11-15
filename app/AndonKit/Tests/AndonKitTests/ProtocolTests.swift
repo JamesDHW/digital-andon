@@ -6,7 +6,7 @@ final class ProtocolTests: XCTestCase {
         let state = Fixtures.helloState()
         XCTAssertEqual(state.you, Fixtures.james)
         XCTAssertEqual(state.members.count, 5)
-        XCTAssertEqual(state.light(for: Fixtures.priya)?.topic, "Prod deploy blocked by failing migration")
+        XCTAssertEqual(state.light(for: Fixtures.priya)?.status, "Prod deploy blocked by failing migration")
         XCTAssertEqual(state.light(for: Fixtures.marco)?.colour, .off)
         XCTAssertEqual(state.follows, [Fixtures.priya, Fixtures.tom, Fixtures.aisha, Fixtures.marco])
         XCTAssertEqual(state.online, [Fixtures.james])
@@ -14,7 +14,7 @@ final class ProtocolTests: XCTestCase {
 
     func testDecodesAnOffLight() {
         guard case let .success(.light(light)) = ServerMessage.decode(Fixtures.offLightJSON) else { return XCTFail("Expected a light") }
-        XCTAssertEqual(light, Light(memberId: Fixtures.marco, colour: .off, topic: nil, since: 1_794_614_011_072))
+        XCTAssertEqual(light, Light(memberId: Fixtures.marco, colour: .off, status: nil, since: 1_794_614_011_072))
     }
 
     func testIgnoresUnknownMessageTypesAndReportsMalformedOnes() {
@@ -31,10 +31,8 @@ final class ProtocolTests: XCTestCase {
     }
 
     func testEncodesClientMessagesInTheShapeTheServerValidates() throws {
-        XCTAssertEqual(try decodedObject(.pull(.red, topic: nil)), ["type": "pull", "colour": "red"])
-        XCTAssertEqual(try decodedObject(.pull(.off, topic: nil)), ["type": "pull", "colour": "off"])
-        XCTAssertEqual(try decodedObject(.pull(.amber, topic: "API shape")), ["type": "pull", "colour": "amber", "topic": "API shape"])
-        XCTAssertEqual(try decodedObject(.note("Paired with Tom")), ["type": "note", "note": "Paired with Tom"])
+        XCTAssertEqual(try decodedObject(.pull(.red, status: nil)), ["type": "pull", "colour": "red", "status": ""])
+        XCTAssertEqual(try decodedObject(.pull(.off, status: "On holiday")), ["type": "pull", "colour": "off", "status": "On holiday"])
         XCTAssertEqual(try decodedObject(.unfollow(Fixtures.priya)), ["type": "unfollow", "memberId": Fixtures.priya.rawValue])
     }
 

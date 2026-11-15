@@ -69,7 +69,7 @@ final class NotificationController: NSObject, UNUserNotificationCenterDelegate {
     private func content(for announcement: Announcement, isReminder: Bool) -> UNMutableNotificationContent {
         let content = UNMutableNotificationContent()
         content.title = NotificationText.title(for: announcement, isReminder: isReminder)
-        content.body = announcement.topic ?? NotificationText.fallbackBody(for: announcement.colour)
+        content.body = announcement.status ?? NotificationText.fallbackBody(for: announcement.colour)
         content.threadIdentifier = announcement.memberID.rawValue
         content.categoryIdentifier = announcement.colour == .red ? NotificationIdentifiers.redCategory : NotificationIdentifiers.changeCategory
         content.userInfo = [NotificationIdentifiers.memberKey: announcement.memberID.rawValue]

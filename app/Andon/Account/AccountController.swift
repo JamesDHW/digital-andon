@@ -3,7 +3,7 @@ import AppKit
 import Combine
 import SystemConfiguration
 
-/// Who this Mac is signed in as, and every account-level request: Google sign-in, invites, email codes, profile and follows.
+/// Who this Mac is signed in as, and every account-level request: Google sign-in, invites, email codes, your name and follows.
 @MainActor
 final class AccountController: ObservableObject {
     @Published private(set) var session: AccountSession?
@@ -53,15 +53,6 @@ final class AccountController: ObservableObject {
         return await transport.send(APIRequest.updateProfile(session, change: change), expecting: Member.self)
     }
 
-    /// The photo is downscaled to a small PNG first, so any image a person drops in is accepted.
-    func uploadAvatar(from fileURL: URL) async -> Result<Member, AndonError> {
-        guard let session else { return .failure(AndonError(.unauthorised, "Sign in first.")) }
-        let image = AvatarImageEncoder.pngData(from: fileURL, maxDimension: AppConstants.avatarMaxDimension)
-        return await image.asyncFlatMap { pngData in
-            await transport.send(.success(APIRequest.uploadAvatar(session, image: pngData, contentType: "image/png")), expecting: Member.self)
-        }
-    }
-
     func replaceFollows(_ memberIDs: [MemberID]) async -> Result<Void, AndonError> {
         guard let session else { return .failure(AndonError(.unauthorised, "Sign in first.")) }
         return await transport.send(APIRequest.replaceFollows(session, memberIDs: memberIDs))
@@ -81,16 +72,5 @@ private extension AccountController {
     static func currentDeviceName() -> String {
         let computerName = SCDynamicStoreCopyComputerName(nil, nil) as String? ?? "Mac"
         return String(computerName.prefix(AppConstants.deviceNameMaxLength))
-    }
-}
-
-private extension Result {
-    func asyncFlatMap<NewSuccess>(_ transform: (Success) async -> Result<NewSuccess, Failure>) async -> Result<NewSuccess, Failure> {
-        switch self {
-        case let .success(value):
-            return await transform(value)
-        case let .failure(error):
-            return .failure(error)
-        }
     }
 }

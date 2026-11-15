@@ -4,16 +4,16 @@ import XCTest
 final class NotificationPlannerTests: XCTestCase {
     private let priya = MemberID(rawValue: "priya")
 
-    private func announcement(_ colour: Colour, topic: String? = nil, style: AlertStyle, reminder: Int?) -> NotificationIntent {
-        .announce(Announcement(memberID: priya, memberName: "Priya", colour: colour, topic: topic, style: style, reminderMinutes: reminder))
+    private func announcement(_ colour: Colour, status: String? = nil, style: AlertStyle, reminder: Int?) -> NotificationIntent {
+        .announce(Announcement(memberID: priya, memberName: "Priya", colour: colour, status: status, style: style, reminderMinutes: reminder))
     }
 
     func testAnnouncesANewRedOnceWithAReminder() {
         let green = Fixtures.team([Fixtures.light("Priya", .green, since: 1)])
-        let red = green.applying(.light(Fixtures.light("Priya", .red, since: 2, topic: "Blocked")))
+        let red = green.applying(.light(Fixtures.light("Priya", .red, since: 2, status: "Blocked")))
 
-        XCTAssertEqual(NotificationPlanner.plan(from: green, to: red, preferences: .standard), [announcement(.red, topic: "Blocked", style: .bannerAndSound, reminder: 10)])
-        let retitled = red.applying(.light(Fixtures.light("Priya", .red, since: 2, topic: "Still blocked")))
+        XCTAssertEqual(NotificationPlanner.plan(from: green, to: red, preferences: .standard), [announcement(.red, status: "Blocked", style: .bannerAndSound, reminder: 10)])
+        let retitled = red.applying(.light(Fixtures.light("Priya", .red, since: 2, status: "Still blocked")))
         XCTAssertEqual(NotificationPlanner.plan(from: red, to: retitled, preferences: .standard), [])
     }
 

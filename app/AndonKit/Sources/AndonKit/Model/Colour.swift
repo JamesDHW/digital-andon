@@ -10,7 +10,7 @@ public enum Colour: String, Codable, CaseIterable, Sendable {
     /// The three working levels, in order, for pickers and cycling.
     public static let levels: [Colour] = [.green, .amber, .red]
 
-    /// Amber and red ask for attention; only they carry a topic.
+    /// Amber and red ask for attention.
     public var isRaised: Bool { self == .amber || self == .red }
 
     public var isWorking: Bool { self != .off }

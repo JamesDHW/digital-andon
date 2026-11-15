@@ -11,7 +11,7 @@ final class GoogleSignInSession: NSObject {
 
     func signIn(server: URL, deviceName: String) async -> Result<String, AndonError> {
         guard let startURL = Self.startURL(server: server, deviceName: deviceName) else {
-            return .failure(AndonError(.invalidInput, "Enter your team's Andon address, e.g. https://andon.yourteam.workers.dev"))
+            return .failure(AndonError(.invalidInput, "Enter your team's Digital Andon address, e.g. https://andon.yourteam.workers.dev"))
         }
         let callback = await withCheckedContinuation { (continuation: CheckedContinuation<Result<URL, AndonError>, Never>) in
             let session = ASWebAuthenticationSession(url: startURL, callbackURLScheme: AppConstants.urlScheme) { callbackURL, error in

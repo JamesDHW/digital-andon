@@ -18,7 +18,7 @@ export const handleApiPull = async (context: HttpContext): Promise<HttpOutcome> 
   const body = await parseJsonBody(context.request, apiPullBodySchema);
   if (body instanceof Error) return respondOnly(errorResponse(body));
 
-  const deliveries = pullLight(context.dependencies, { memberId: body.memberId, colour: body.colour, rawTopic: body.topic, source: "api" });
+  const deliveries = pullLight(context.dependencies, { memberId: body.memberId, colour: body.colour, rawStatus: body.status, source: "api" });
   if (deliveries instanceof Error) return respondOnly(errorResponse(deliveries));
   return { response: jsonResponse({ pulled: body.colour }), deliveries };
 };

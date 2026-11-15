@@ -1,12 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 
-import type { AvatarStore } from "../src/application/ports/avatarStore.js";
 import { routeRequest } from "../src/http/routeRequest.js";
 import { addMember, createTestTeam, expectSuccess, type TestTeam } from "./support/testTeam.js";
 import { TEST_ORIGIN } from "./support/testTeam.constants.js";
-
-const acceptingAvatars: AvatarStore = { put: async () => undefined };
 
 const deviceResponseSchema = z.object({ deviceToken: z.string() });
 const inviteResponseSchema = z.object({ joinLink: z.string() });
@@ -19,7 +16,7 @@ const send = async (team: TestTeam, method: string, path: string, options: { rea
     headers.set("authorization", `Bearer ${options.token}`);
   }
   const request = new Request(`${TEST_ORIGIN}${path}`, { method, headers, body: options.body === undefined ? null : JSON.stringify(options.body) });
-  return routeRequest({ request, url: new URL(request.url), dependencies: team.dependencies, avatars: acceptingAvatars, isDevelopmentMode: false });
+  return routeRequest({ request, url: new URL(request.url), dependencies: team.dependencies, isDevelopmentMode: false });
 };
 
 const signInAs = async (team: TestTeam, email: string): Promise<string> => {
@@ -103,20 +100,21 @@ describe("HTTP endpoints", () => {
     const rotated = await send(team, "POST", "/team/api-key", { token: adminToken });
     const { apiKey } = apiKeyResponseSchema.parse(await rotated.response.json());
 
-    const pulled = await send(team, "POST", "/api/pull", { token: apiKey, body: { memberId: james?.id, colour: "red", topic: "CI failing on main" } });
+    const pulled = await send(team, "POST", "/api/pull", { token: apiKey, body: { memberId: james?.id, colour: "red", status: "CI failing on main" } });
     expect(pulled.response.status).toBe(200);
-    expect(pulled.deliveries).toMatchObject([{ message: { light: { colour: "red", topic: "CI failing on main" } } }]);
+    expect(pulled.deliveries).toMatchObject([{ message: { light: { colour: "red", status: "CI failing on main" } } }]);
 
     expect((await send(team, "POST", "/api/pull", { token: "wrong", body: { memberId: james?.id, colour: "red" } })).response.status).toBe(401);
   });
 
-  it("validates profile updates and accepts only https avatar URLs", async () => {
+  it("lets people change only their name: photos come from Google", async () => {
     const team = createTestTeam();
     addMember(team, "priya");
     const priyaToken = await signInAs(team, "priya@example.com");
 
-    expect((await send(team, "PATCH", "/me", { token: priyaToken, body: { avatarUrl: "http://insecure.example/me.png" } })).response.status).toBe(400);
-    const updated = await send(team, "PATCH", "/me", { token: priyaToken, body: { name: "Priya S", avatarUrl: "https://github.com/priya.png" } });
-    expect(await updated.response.json()).toMatchObject({ name: "Priya S", avatarUrl: "https://github.com/priya.png" });
+    expect((await send(team, "PATCH", "/me", { token: priyaToken, body: { name: "" } })).response.status).toBe(400);
+    const updated = await send(team, "PATCH", "/me", { token: priyaToken, body: { name: "Priya S", avatarUrl: "https://example.com/me.png" } });
+    expect(await updated.response.json()).toMatchObject({ name: "Priya S", avatarUrl: null });
+    expect((await send(team, "PUT", "/me/avatar", { token: priyaToken })).response.status).toBe(404);
   });
 });

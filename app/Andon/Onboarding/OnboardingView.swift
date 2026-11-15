@@ -42,7 +42,7 @@ struct OnboardingView: View {
 
     private var welcomeStep: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Sign in to your team's andon").font(.title2.weight(.semibold))
+            Text("Sign in to Digital Andon").font(.title2.weight(.semibold))
             Text("Use your work Google account. Your name and photo come with it, so your team knows who's stopped.")
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
@@ -117,7 +117,7 @@ struct OnboardingView: View {
         if teamStore.state?.yourself == nil {
             ProgressView("Connecting…")
         }
-        Text("Shortcuts: ⌃⌥G green · ⌃⌥A amber · ⌃⌥R red. Add ⇧ to include a topic. Change them in Settings.")
+        Text("Shortcuts: ⌃⌥↑ and ⌃⌥↓ change your light, ⌃⌥S sets your status, ⌃⌥O switches you off. Change them in Settings.")
             .font(.callout)
             .foregroundStyle(.secondary)
         HStack {

@@ -35,7 +35,7 @@ final class RealtimeClient {
     }
 
     func send(_ message: ClientMessage) -> Result<Void, AndonError> {
-        guard let socket else { return .failure(AndonError(.network, "Not connected. Your change will need repeating once Andon reconnects.")) }
+        guard let socket else { return .failure(AndonError(.network, "Not connected. Your change will need repeating once Digital Andon reconnects.")) }
         return message.encoded().map { text in socket.send(.string(text)) { _ in } }
     }
 
