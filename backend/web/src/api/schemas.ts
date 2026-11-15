@@ -24,6 +24,16 @@ export const snapshotSchema = z.object({
   online: z.array(memberIdSchema),
 });
 
+/** The socket messages the web app uses; anything else (errors, newer kinds) is ignored. */
+export const liveMessageSchema = z.discriminatedUnion("type", [
+  z.object({ type: z.literal("hello"), you: memberIdSchema, members: z.array(memberSchema), lights: z.array(lightSchema), follows: z.array(memberIdSchema), online: z.array(memberIdSchema) }),
+  z.object({ type: z.literal("light"), light: lightSchema }),
+  z.object({ type: z.literal("presence"), memberId: memberIdSchema, isOnline: z.boolean() }),
+  z.object({ type: z.literal("member"), member: memberSchema }),
+  z.object({ type: z.literal("memberRemoved"), memberId: memberIdSchema }),
+  z.object({ type: z.literal("follows"), memberIds: z.array(memberIdSchema) }),
+]);
+
 export const historySchema = z.object({
   from: z.number(),
   to: z.number(),

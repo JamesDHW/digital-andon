@@ -13,7 +13,7 @@ import { acceptTeamSocket } from "./acceptTeamSocket.js";
 import { readDeploymentConfiguration, type AndonEnvironment } from "./andonEnvironment.js";
 import { createTeamDependencies } from "./createTeamDependencies.js";
 import { LOCAL_ORIGIN, NORMAL_CLOSURE_CODE, RESERVED_CLOSE_CODES, SOCKET_PING, SOCKET_PONG } from "./runtime.constants.js";
-import { deliverToSockets, hasOtherOpenSocket, onlineMemberIds, sendError, socketMemberId } from "./teamSockets.js";
+import { deliverToSockets, hasOtherOpenSocket, isViewerSocket, onlineMemberIds, sendError, socketMemberId } from "./teamSockets.js";
 
 /** One instance holds a whole team: members, lights, follows, the event log and every open socket. */
 export class TeamObject extends DurableObject<AndonEnvironment> {
@@ -40,7 +40,8 @@ export class TeamObject extends DurableObject<AndonEnvironment> {
 
   override async webSocketMessage(socket: WebSocket, rawMessage: string | ArrayBuffer): Promise<void> {
     const memberId = socketMemberId(this.ctx, socket);
-    if (memberId === null) return;
+    const isWatchingOnly = memberId === null || isViewerSocket(this.ctx, socket);
+    if (isWatchingOnly) return;
     if (typeof rawMessage !== "string") return sendError(socket, new InvalidRequestError("Send text messages."));
 
     const message = parseClientMessage(rawMessage);
@@ -54,7 +55,7 @@ export class TeamObject extends DurableObject<AndonEnvironment> {
   override async webSocketClose(socket: WebSocket, code: number, reason: string): Promise<void> {
     tryCatch(() => socket.close(sendableCloseCode(code), reason));
     const memberId = socketMemberId(this.ctx, socket);
-    const isPresenceUnchanged = memberId === null || hasOtherOpenSocket(this.ctx, memberId, socket);
+    const isPresenceUnchanged = memberId === null || isViewerSocket(this.ctx, socket) || hasOtherOpenSocket(this.ctx, memberId, socket);
     if (isPresenceUnchanged) return;
 
     deliverToSockets(this.ctx, [toEveryone({ type: "presence", memberId, isOnline: false })]);

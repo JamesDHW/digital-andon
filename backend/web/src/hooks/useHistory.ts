@@ -12,8 +12,9 @@ export type HistoryState = {
   readonly problem: string | null;
 };
 
-/** Reloads whenever the window or the people change. */
-export const useHistory = (token: string, range: TimeRange, memberIds: readonly MemberId[], onSignedOut: () => void): HistoryState => {
+/** Reloads whenever the window or the people change, and whenever `changeKey` does: pass something that changes
+ * when anyone's light does, and the timeline follows live. */
+export const useHistory = (token: string, range: TimeRange, memberIds: readonly MemberId[], changeKey: string, onSignedOut: () => void): HistoryState => {
   const [state, setState] = useState<HistoryState>({ history: null, isLoading: true, problem: null });
   // Plain values, so a new array or range object with the same contents doesn't reload.
   const memberKey = memberIds.join(",");
@@ -22,7 +23,7 @@ export const useHistory = (token: string, range: TimeRange, memberIds: readonly 
   useEffect(() => {
     const cancellation = new AbortController();
     const load = async (): Promise<void> => {
-      setState((previous) => ({ ...previous, isLoading: true }));
+      setState((previous) => ({ ...previous, isLoading: previous.history === null }));
       const history = await fetchHistory(token, { from, to }, memberKey.split(",").filter(isMemberId));
       if (cancellation.signal.aborted) return;
       if (history instanceof UnauthorisedError) return onSignedOut();
@@ -33,7 +34,7 @@ export const useHistory = (token: string, range: TimeRange, memberIds: readonly 
     return () => {
       cancellation.abort();
     };
-  }, [token, from, to, memberKey, onSignedOut]);
+  }, [token, from, to, memberKey, changeKey, onSignedOut]);
 
   return state;
 };

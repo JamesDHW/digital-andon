@@ -28,7 +28,11 @@ export const TimelinePage = ({ token, route, snapshot, onSignedOut }: TimelinePa
   const window = windowFromQuery(route.query);
   const range = resolveWindow(window, now);
   const people = selectedPeople(route.query, snapshot);
-  const { history, isLoading, problem } = useHistory(token, range, people, onSignedOut);
+  const lightsKey = snapshot.lights
+    .filter((light) => people.includes(light.memberId))
+    .map((light) => `${light.memberId}:${light.colour}:${light.since}:${light.status ?? ""}`)
+    .join("|");
+  const { history, isLoading, problem } = useHistory(token, range, people, lightsKey, onSignedOut);
   const { ref, width } = useElementWidth<HTMLDivElement>();
   const timelines = (history?.members ?? []).flatMap((memberHistory): PersonTimeline[] => {
     const member = memberById(snapshot.members, memberHistory.memberId);

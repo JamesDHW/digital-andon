@@ -2,6 +2,7 @@ import { AndonError } from "../errors/andonError.js";
 import { tryCatch } from "../errors/tryCatch.js";
 import { isMemberId, type MemberId } from "../domain/memberId.js";
 import type { Delivery, ServerMessage } from "../protocol/serverMessage.js";
+import { VIEWER_SOCKET_TAG } from "./runtime.constants.js";
 
 /** Open sockets are tagged with their member id when accepted. */
 export const socketMemberId = (state: DurableObjectState, socket: WebSocket): MemberId | null => {
@@ -11,13 +12,23 @@ export const socketMemberId = (state: DurableObjectState, socket: WebSocket): Me
   return memberId;
 };
 
+/** The web app watches over a socket too, but only the Mac app counts as being online. */
+export const isViewerSocket = (state: DurableObjectState, socket: WebSocket): boolean => state.getTags(socket).includes(VIEWER_SOCKET_TAG);
+
 export const onlineMemberIds = (state: DurableObjectState): readonly MemberId[] => {
-  const memberIds = state.getWebSockets().map((socket) => socketMemberId(state, socket)).filter((memberId) => memberId !== null);
+  const memberIds = state
+    .getWebSockets()
+    .filter((socket) => !isViewerSocket(state, socket))
+    .map((socket) => socketMemberId(state, socket))
+    .filter((memberId) => memberId !== null);
   return [...new Set(memberIds)];
 };
 
 export const hasOtherOpenSocket = (state: DurableObjectState, memberId: MemberId, closingSocket: WebSocket): boolean =>
-  state.getWebSockets(memberId).some((socket) => socket !== closingSocket && socket.readyState === WebSocket.OPEN);
+  state.getWebSockets(memberId).some((socket) => isOtherOpenAppSocket(state, socket, closingSocket));
+
+const isOtherOpenAppSocket = (state: DurableObjectState, socket: WebSocket, closingSocket: WebSocket): boolean =>
+  socket !== closingSocket && socket.readyState === WebSocket.OPEN && !isViewerSocket(state, socket);
 
 export const deliverToSockets = (state: DurableObjectState, deliveries: readonly Delivery[]): void => {
   for (const delivery of deliveries) {
