@@ -15,7 +15,8 @@ set -euo pipefail
 : "${RELEASE_DOWNLOAD_PREFIX:?Set RELEASE_DOWNLOAD_PREFIX, e.g. https://github.com/org/digital-andon/releases/download/v0.2.0/}"
 
 MARKETING_VERSION="${VERSION#v}"
-BUILD_NUMBER="${BUILD_NUMBER:-$(git rev-list --count HEAD)}"
+# Sparkle compares build numbers, so derive a rising one from the version: 1.2.3 → 10203.
+BUILD_NUMBER="${BUILD_NUMBER:-$(awk -F. '{ print $1 * 10000 + $2 * 100 + $3 }' <<< "$MARKETING_VERSION")}"
 APP_DIR="$(cd "$(dirname "$0")/../app" && pwd)"
 BUILD_DIR="$APP_DIR/build"
 DERIVED_DATA="$BUILD_DIR/DerivedData"

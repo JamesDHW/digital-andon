@@ -10,6 +10,6 @@ ANDON_DEFAULT_SERVER = https:/$()/andon.james-haworth-wheatman.workers.dev
 // Sparkle update feed and public key (from Sparkle's generate_keys). Leave empty for local builds: updates stay off.
 // e.g. https:/$()/github.com/your-org/digital-andon/releases/latest/download/appcast.xml
 ANDON_APPCAST_URL = https:/$()/github.com/JamesDHW/digital-andon/releases/latest/download/appcast.xml
-ANDON_SPARKLE_PUBLIC_KEY = ../../certs/sparkle-private.key
+ANDON_SPARKLE_PUBLIC_KEY = b0JUbYTOBJhD4E472AsMAC0firt+Atv9p9dA3fZTeqM=
 
 #include? "Local.xcconfig"
