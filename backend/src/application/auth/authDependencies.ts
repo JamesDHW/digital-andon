@@ -11,7 +11,7 @@ export type AuthDependencies = TeamDependencies & {
   readonly settings: SettingsStore;
   readonly secrets: Secrets;
   readonly mailer: Mailer;
-  /** The https origin invite links and Google's redirect point at. */
+  /** The https origin Google's redirect and the web app point at. */
   readonly publicOrigin: string;
   /** The one address allowed to create the first admin on an empty team. */
   readonly bootstrapAdminEmail: string | null;

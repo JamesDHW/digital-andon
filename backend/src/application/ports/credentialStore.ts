@@ -9,15 +9,6 @@ export type Device = {
   readonly lastSeenAt: number;
 };
 
-export type Invite = {
-  readonly codeHash: string;
-  readonly email: string;
-  readonly name: string;
-  readonly invitedBy: MemberId;
-  readonly expiresAt: number;
-  readonly usedAt: number | null;
-};
-
 export type LoginCode = {
   readonly email: string;
   readonly codeHash: string;
@@ -42,8 +33,6 @@ export type CredentialStore = {
   readonly saveDevice: (device: Device) => undefined | AndonError;
   readonly findDevice: (tokenHash: string) => Device | null | AndonError;
   readonly removeDevicesOf: (memberId: MemberId) => undefined | AndonError;
-  readonly saveInvite: (invite: Invite) => undefined | AndonError;
-  readonly findInvite: (codeHash: string) => Invite | null | AndonError;
   readonly saveLoginCode: (loginCode: LoginCode) => undefined | AndonError;
   readonly findLoginCode: (email: string) => LoginCode | null | AndonError;
   readonly removeLoginCode: (email: string) => undefined | AndonError;

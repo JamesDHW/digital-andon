@@ -4,6 +4,7 @@ import { InvalidRequestError } from "../errors/andonError.js";
 import { tryCatch, tryCatchAsync } from "../errors/tryCatch.js";
 import type { AuthDependencies } from "../application/auth/authDependencies.js";
 import { handleClientMessage } from "../application/handleClientMessage.js";
+import { noteDisconnected, switchOffAbsentMembers } from "../application/presence/offlineLights.js";
 import { migrateSchema } from "../adapters/sql/migrateSchema.js";
 import { routeRequest } from "../http/routeRequest.js";
 import { parseClientMessage } from "../protocol/clientMessage.js";
@@ -57,6 +58,19 @@ export class TeamObject extends DurableObject<AndonEnvironment> {
     if (isPresenceUnchanged) return;
 
     deliverToSockets(this.ctx, [toEveryone({ type: "presence", memberId, isOnline: false })]);
+    const checkAt = noteDisconnected(this.dependencies(LOCAL_ORIGIN), memberId);
+    if (checkAt instanceof Error) return console.error(`[andon] couldn't schedule the offline check: ${checkAt.message}`);
+    await this.ctx.storage.setAlarm(checkAt);
+  }
+
+  /** Switches off anyone whose Mac has been gone past the grace period, then waits for the next one due. */
+  override async alarm(): Promise<void> {
+    const sweep = switchOffAbsentMembers(this.dependencies(LOCAL_ORIGIN));
+    if (sweep instanceof Error) return console.error(`[andon] offline sweep failed: ${sweep.message}`);
+    deliverToSockets(this.ctx, sweep.deliveries);
+    if (sweep.nextCheckAt !== null) {
+      await this.ctx.storage.setAlarm(sweep.nextCheckAt);
+    }
   }
 
   private dependencies(requestOrigin: string): AuthDependencies {

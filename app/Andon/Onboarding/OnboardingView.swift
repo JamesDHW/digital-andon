@@ -29,8 +29,6 @@ struct OnboardingView: View {
         switch model.step {
         case .welcome:
             welcomeStep
-        case .invite:
-            inviteStep
         case .email:
             emailStep
         case .code:
@@ -43,7 +41,7 @@ struct OnboardingView: View {
     private var welcomeStep: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Sign in to Digital Andon").font(.title2.weight(.semibold))
-            Text("Use your work Google account. Your name and photo come with it, so your team knows who's stopped.")
+            Text("Use your work Google account. Your name and photo come with it, so your team knows who's blocked.")
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
             if model.isServerFieldShown {
@@ -56,26 +54,10 @@ struct OnboardingView: View {
             .controlSize(.large)
             .keyboardShortcut(.defaultAction)
             HStack {
-                Button("Have an invite link?") { model.show(.invite) }.buttonStyle(.link)
                 Spacer()
                 Button("Use an email code") { model.show(.email) }.buttonStyle(.link)
             }
             .font(.callout)
-        }
-    }
-
-    private var inviteStep: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text("Join your team's andon board").font(.title2.weight(.semibold))
-            Text("Open the invite link from your email, or paste it here.").foregroundStyle(.secondary)
-            TextField("https://andon.yourteam.workers.dev/join/?code=…", text: $model.inviteText)
-                .textFieldStyle(.roundedBorder)
-                .onSubmit(model.join)
-            HStack {
-                Button("Back") { model.show(.welcome) }.buttonStyle(.link)
-                Spacer()
-                Button("Join", action: model.join).keyboardShortcut(.defaultAction)
-            }
         }
     }
 

@@ -1,7 +1,7 @@
 import AndonKit
 import SwiftUI
 
-/// Your own light: Clear, Watch and Stop, an Off switch, then your status. Changes show at once.
+/// Your own light: Clear, Assist and Blocked, an Off switch, then your status. Changes show at once.
 struct OwnLightControl: View {
     let model: DropdownModel
     let actions: AndonActions

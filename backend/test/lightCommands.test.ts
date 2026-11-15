@@ -28,7 +28,7 @@ describe("pulling the cord", () => {
         },
       },
     ]);
-    expect(expectSuccess(team.dependencies.events.list({ afterId: 0, limit: 10 }))).toMatchObject([
+    expect(expectSuccess(team.dependencies.events.list({ afterId: 0, limit: 10, from: null, to: null, memberIds: null }))).toMatchObject([
       { kind: "pull", memberId: priya.id, colour: "red", status: "Deploy blocked", source: "app" },
     ]);
   });
@@ -43,7 +43,7 @@ describe("pulling the cord", () => {
     expectSuccess(handleClientMessage(team.dependencies, priya.id, { type: "pull", colour: "amber" }));
     expectSuccess(handleClientMessage(team.dependencies, priya.id, { type: "pull", colour: "amber", status: "Unsure about API shape" }));
 
-    const events = expectSuccess(team.dependencies.events.list({ afterId: 0, limit: 10 }));
+    const events = expectSuccess(team.dependencies.events.list({ afterId: 0, limit: 10, from: null, to: null, memberIds: null }));
     expect(events.map((event) => event.kind)).toEqual(["pull", "status"]);
   });
 

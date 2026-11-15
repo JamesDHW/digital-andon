@@ -6,7 +6,6 @@ import { addMember, createTestTeam, expectSuccess, type TestTeam } from "./suppo
 import { TEST_ORIGIN } from "./support/testTeam.constants.js";
 
 const deviceResponseSchema = z.object({ deviceToken: z.string() });
-const inviteResponseSchema = z.object({ joinLink: z.string() });
 const followsResponseSchema = z.object({ memberIds: z.array(z.string()) });
 
 const send = async (team: TestTeam, method: string, path: string, options: { readonly token?: string; readonly body?: unknown } = {}) => {
@@ -26,21 +25,13 @@ const signInAs = async (team: TestTeam, email: string): Promise<string> => {
 };
 
 describe("HTTP endpoints", () => {
-  it("runs the admin journey: sign in, invite, redeem, follow list and the event log", async () => {
+  it("runs the admin journey: sign in, follow someone and export the event log", async () => {
     const team = createTestTeam({ bootstrapAdminEmail: "james@example.com" });
     const adminToken = await signInAs(team, "james@example.com");
+    const priya = addMember(team, "priya");
 
-    const invite = await send(team, "POST", "/auth/invite", { token: adminToken, body: { email: "priya@example.com", name: "Priya" } });
-    expect(invite.response.status).toBe(201);
-    const { joinLink } = inviteResponseSchema.parse(await invite.response.json());
-    const code = new URL(joinLink).searchParams.get("code");
-
-    const redeem = await send(team, "POST", "/auth/redeem", { body: { code, deviceName: "Priya's Mac" } });
-    expect(redeem.response.status).toBe(200);
-    expect(redeem.deliveries).toHaveLength(2);
-
-    const follows = await send(team, "GET", "/me/follows", { token: adminToken });
-    expect(followsResponseSchema.parse(await follows.response.json()).memberIds).toHaveLength(1);
+    const followed = await send(team, "PUT", "/me/follows", { token: adminToken, body: { memberIds: [priya.id] } });
+    expect(followsResponseSchema.parse(await followed.response.json()).memberIds).toEqual([priya.id]);
 
     const csv = await send(team, "GET", "/team/events?format=csv", { token: adminToken });
     expect(csv.response.headers.get("content-type")).toContain("text/csv");
@@ -56,7 +47,7 @@ describe("HTTP endpoints", () => {
     expect((await send(team, "GET", "/nowhere", { token: priyaToken })).response.status).toBe(404);
   });
 
-  it("signs in with Google: the app gets an andon:// redirect, the admin page a URL fragment, and a cancel says so", async () => {
+  it("signs in with Google: the app gets an andon:// redirect, the web app a URL fragment, and a cancel says so", async () => {
     const team = createTestTeam({ allowedDomains: ["theodo.com"] });
     team.google.signInAs({ email: "priya@theodo.com", isEmailVerified: true, name: "Priya", pictureUrl: null });
     const returnFromGoogle = async (client: string, query: string): Promise<string> => {
@@ -76,7 +67,7 @@ describe("HTTP endpoints", () => {
     expect((await send(team, "GET", "/me", { token: appToken })).response.status).toBe(200);
 
     const webAddress = await returnFromGoogle("web", "&code=google-code");
-    expect(webAddress.startsWith(`${TEST_ORIGIN}/admin/#token=`)).toBe(true);
+    expect(webAddress.startsWith(`${TEST_ORIGIN}/#token=`)).toBe(true);
 
     const cancelled = new URL(await returnFromGoogle("app", "&error=access_denied"));
     expect(cancelled.searchParams.get("error")).toBe("Google sign-in was cancelled.");

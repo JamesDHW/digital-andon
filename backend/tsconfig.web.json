@@ -1,0 +1,30 @@
+{
+  "extends": "architecture-rules/presets/tsconfig.json",
+  "compilerOptions": {
+    "target": "ES2023",
+    "lib": [
+      "ES2023",
+      "DOM",
+      "DOM.Iterable"
+    ],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "jsx": "react-jsx",
+    "types": [
+      "vite/client"
+    ],
+    "noEmit": true,
+    "skipLibCheck": true,
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
+    "paths": {
+      "@backend/*": [
+        "./src/*"
+      ]
+    }
+  },
+  "include": [
+    "web/src/**/*.ts",
+    "web/src/**/*.tsx"
+  ]
+}

@@ -1,34 +1,11 @@
 import { devSignIn } from "../application/auth/devSignIn.js";
-import { inviteMember } from "../application/auth/inviteMember.js";
-import { redeemInvite } from "../application/auth/redeemInvite.js";
 import { requestLoginCode } from "../application/auth/requestLoginCode.js";
 import { verifyLoginCode } from "../application/auth/verifyLoginCode.js";
 import { authenticatedMember } from "./authenticatedMember.js";
 import { respondOnly, type HttpContext, type HttpOutcome } from "./httpOutcome.js";
 import { errorResponse, jsonResponse, noContentResponse } from "./httpResponses.js";
 import { parseJsonBody } from "./requestBody.js";
-import { codeRequestBodySchema, codeVerifyBodySchema, devSignInBodySchema, inviteBodySchema, redeemBodySchema } from "./requestSchemas.js";
-
-export const handleInvite = async (context: HttpContext): Promise<HttpOutcome> => {
-  const inviter = await authenticatedMember(context);
-  if (inviter instanceof Error) return respondOnly(errorResponse(inviter));
-
-  const body = await parseJsonBody(context.request, inviteBodySchema);
-  if (body instanceof Error) return respondOnly(errorResponse(body));
-
-  const invite = await inviteMember(context.dependencies, { inviter, email: body.email, name: body.name });
-  if (invite instanceof Error) return respondOnly(errorResponse(invite));
-  return respondOnly(jsonResponse(invite, 201));
-};
-
-export const handleRedeem = async (context: HttpContext): Promise<HttpOutcome> => {
-  const body = await parseJsonBody(context.request, redeemBodySchema);
-  if (body instanceof Error) return respondOnly(errorResponse(body));
-
-  const redeemed = await redeemInvite(context.dependencies, body);
-  if (redeemed instanceof Error) return respondOnly(errorResponse(redeemed));
-  return { response: jsonResponse({ deviceToken: redeemed.deviceToken, memberId: redeemed.memberId }), deliveries: redeemed.deliveries };
-};
+import { codeRequestBodySchema, codeVerifyBodySchema, devSignInBodySchema } from "./requestSchemas.js";
 
 export const handleCodeRequest = async (context: HttpContext): Promise<HttpOutcome> => {
   const body = await parseJsonBody(context.request, codeRequestBodySchema);

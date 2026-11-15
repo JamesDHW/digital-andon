@@ -6,6 +6,7 @@ import { createSqlEventStore } from "../../src/adapters/sql/sqlEventStore.js";
 import { createSqlFollowStore } from "../../src/adapters/sql/sqlFollowStore.js";
 import { createSqlLightStore } from "../../src/adapters/sql/sqlLightStore.js";
 import { createSqlMemberStore } from "../../src/adapters/sql/sqlMemberStore.js";
+import { createSqlPresenceCheckStore } from "../../src/adapters/sql/sqlPresenceCheckStore.js";
 import { createSqlSettingsStore } from "../../src/adapters/sql/sqlSettingsStore.js";
 import { migrateSchema } from "../../src/adapters/sql/migrateSchema.js";
 import type { Member, MemberRole } from "../../src/domain/member.js";
@@ -36,6 +37,7 @@ export const createTestTeam = (options: { readonly allowedDomains?: readonly str
     lights: createSqlLightStore(sql),
     follows: createSqlFollowStore(sql),
     events: createSqlEventStore(sql),
+    presenceChecks: createSqlPresenceCheckStore(sql),
     credentials: createSqlCredentialStore(sql),
     settings: createSqlSettingsStore(sql, { teamName: "Test team", allowedDomains: options.allowedDomains ?? [] }),
     secrets: createFakeSecrets(),

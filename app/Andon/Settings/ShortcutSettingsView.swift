@@ -7,8 +7,8 @@ struct ShortcutSettingsView: View {
     var body: some View {
         Form {
             Section("Your light") {
-                KeyboardShortcuts.Recorder("Step up (Clear → Watch → Stop):", name: .cycleUp)
-                KeyboardShortcuts.Recorder("Step down (Stop → Watch → Clear):", name: .cycleDown)
+                KeyboardShortcuts.Recorder("Step up (Clear → Assist → Blocked):", name: .cycleUp)
+                KeyboardShortcuts.Recorder("Step down (Blocked → Assist → Clear):", name: .cycleDown)
             }
             Section("Off") {
                 KeyboardShortcuts.Recorder("Switch off and back on:", name: .toggleOff)

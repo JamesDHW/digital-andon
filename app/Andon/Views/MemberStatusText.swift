@@ -1,7 +1,7 @@
 import AndonKit
 import Foundation
 
-/// The small grey line under a name: "Stop · 12 min · still waiting", "Watch · 1 h", "Clear · offline", "Off · 2 h".
+/// The small grey line under a name: "Blocked · 12 min · still waiting", "Assist · 1 h", "Clear · offline", "Off · 2 h".
 enum MemberStatusText {
     static func describe(_ row: DropdownRow, now: Date) -> String {
         let light = row.rankedMember.light

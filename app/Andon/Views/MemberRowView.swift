@@ -1,7 +1,7 @@
 import AndonKit
 import SwiftUI
 
-/// One person. Someone stopped gets a tinted card, so it's the first thing you see; go and help them.
+/// One person. Someone blocked gets a tinted card, so it's the first thing you see; go and help them.
 struct MemberRowView: View {
     let row: DropdownRow
     let now: Date
@@ -9,7 +9,7 @@ struct MemberRowView: View {
 
     private var member: Member { row.rankedMember.member }
     private var light: Light { row.rankedMember.light }
-    private var isStopped: Bool { light.colour == .red }
+    private var isBlocked: Bool { light.colour == .red }
 
     var body: some View {
         HStack(alignment: .center, spacing: 12) {
@@ -18,7 +18,7 @@ struct MemberRowView: View {
                 colour: light.colour,
                 isBreathing: light.isBreathing(at: now),
                 isDimmed: !row.rankedMember.isOnline || light.colour == .off,
-                diameter: isStopped ? 40 : 34
+                diameter: isBlocked ? 40 : 34
             )
             VStack(alignment: .leading, spacing: 2) {
                 Text(member.name).font(.system(size: 14, weight: .semibold))
@@ -32,8 +32,8 @@ struct MemberRowView: View {
                 Button("Follow") { actions.follow(member.id) }.controlSize(.small)
             }
         }
-        .padding(.vertical, isStopped ? 12 : 7)
-        .padding(.horizontal, isStopped ? 12 : 8)
+        .padding(.vertical, isBlocked ? 12 : 7)
+        .padding(.horizontal, isBlocked ? 12 : 8)
         .background(cardBackground)
         .contentShape(Rectangle())
         .contextMenu { contextMenu }
@@ -41,8 +41,8 @@ struct MemberRowView: View {
 
     @ViewBuilder
     private var cardBackground: some View {
-        if isStopped {
-            RoundedRectangle(cornerRadius: 12, style: .continuous).fill(LightStyle.colour(.red).opacity(DropdownColours.stoppedCardOpacity))
+        if isBlocked {
+            RoundedRectangle(cornerRadius: 12, style: .continuous).fill(LightStyle.colour(.red).opacity(DropdownColours.blockedCardOpacity))
         }
     }
 

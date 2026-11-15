@@ -2,10 +2,6 @@ import Foundation
 
 /// Builds every HTTP request the app sends. Executing them is the app's job.
 public enum APIRequest {
-    public static func redeemInvite(_ invitation: JoinInvitation, deviceName: String) -> Result<URLRequest, AndonError> {
-        json("POST", invitation.server, "/auth/redeem", token: nil, body: ["code": invitation.code, "deviceName": deviceName])
-    }
-
     public static func requestCode(server: URL, email: String) -> Result<URLRequest, AndonError> {
         json("POST", server, "/auth/code/request", token: nil, body: ["email": email])
     }

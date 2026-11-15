@@ -22,9 +22,8 @@ export const createFakeGoogle = (): FakeGoogle => {
     exchangeCode: async (exchange) => {
       exchanges.push(exchange);
       const profile = profiles.at(-1);
-      const isAcceptedCode = exchange.code === ACCEPTED_GOOGLE_CODE;
-      if (!isAcceptedCode) return new InvalidCodeError();
-      if (profile === undefined) return new InvalidCodeError();
+      const isAccepted = exchange.code === ACCEPTED_GOOGLE_CODE && profile !== undefined;
+      if (!isAccepted) return new InvalidCodeError();
       return profile;
     },
     signInAs: (profile) => {

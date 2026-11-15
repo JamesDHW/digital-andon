@@ -36,20 +36,6 @@ final class ProtocolTests: XCTestCase {
         XCTAssertEqual(try decodedObject(.unfollow(Fixtures.priya)), ["type": "unfollow", "memberId": Fixtures.priya.rawValue])
     }
 
-    func testParsesBothInviteLinkForms() {
-        XCTAssertEqual(
-            JoinInvitation.parse("andon://join?server=https%3A%2F%2Fandon.example.workers.dev&code=abc123"),
-            JoinInvitation(server: URL(string: "https://andon.example.workers.dev")!, code: "abc123")
-        )
-        XCTAssertEqual(
-            JoinInvitation.parse("  https://andon.example.workers.dev/join/?code=abc123 \n"),
-            JoinInvitation(server: URL(string: "https://andon.example.workers.dev")!, code: "abc123")
-        )
-        XCTAssertEqual(JoinInvitation.parse("http://localhost:8787/join/?code=x")?.server, URL(string: "http://localhost:8787")!)
-        XCTAssertNil(JoinInvitation.parse("https://andon.example.workers.dev/join/"))
-        XCTAssertNil(JoinInvitation.parse("mailto:someone@example.com?code=x"))
-    }
-
     func testBuildsTheSocketURLFromTheServerOrigin() {
         let secure = AccountSession(server: URL(string: "https://andon.example.workers.dev")!, deviceToken: "t")
         let local = AccountSession(server: URL(string: "http://localhost:8787")!, deviceToken: "t")

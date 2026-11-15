@@ -1,7 +1,7 @@
 import { completeGoogleSignIn, startGoogleSignIn, takeSignInAttempt, type GoogleSignInStart } from "../application/auth/googleSignIn.js";
 import type { SignInClient } from "../application/ports/credentialStore.js";
 import type { AndonError } from "../errors/andonError.js";
-import { ADMIN_PAGE_PATH, APP_SIGNED_IN_URL, DEFAULT_APP_DEVICE_NAME, DEFAULT_WEB_DEVICE_NAME, DEVICE_NAME_MAX_LENGTH, FOUND_STATUS } from "./http.constants.js";
+import { WEB_HOME_PATH, APP_SIGNED_IN_URL, DEFAULT_APP_DEVICE_NAME, DEFAULT_WEB_DEVICE_NAME, DEVICE_NAME_MAX_LENGTH, FOUND_STATUS } from "./http.constants.js";
 import { respondOnly, type HttpContext, type HttpOutcome } from "./httpOutcome.js";
 import { ERROR_STATUSES } from "./httpResponses.constants.js";
 
@@ -13,7 +13,7 @@ export const handleGoogleStart = async (context: HttpContext): Promise<HttpOutco
 };
 
 /** GET /auth/google/callback: Google sends the browser back here. The Mac app gets its token through
- * an andon:// redirect its sign-in window is waiting for; the admin page gets it in the URL fragment,
+ * an andon:// redirect its sign-in window is waiting for; the web app gets it in the URL fragment,
  * which never reaches a server. */
 export const handleGoogleCallback = async (context: HttpContext): Promise<HttpOutcome> => {
   const attempt = await takeSignInAttempt(context.dependencies, context.url.searchParams.get("state") ?? "");
@@ -41,7 +41,7 @@ const finishWithError = (context: HttpContext, client: SignInClient, message: st
 
 const signedInAddress = (context: HttpContext, client: SignInClient, parameters: URLSearchParams): string => {
   if (client === "app") return `${APP_SIGNED_IN_URL}?${parameters.toString()}`;
-  return `${context.dependencies.publicOrigin}${ADMIN_PAGE_PATH}#${parameters.toString()}`;
+  return `${context.dependencies.publicOrigin}${WEB_HOME_PATH}#${parameters.toString()}`;
 };
 
 /** Built by hand: Response.redirect only accepts http(s) addresses in some runtimes, and andon:// is not one. */

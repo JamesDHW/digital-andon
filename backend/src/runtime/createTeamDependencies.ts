@@ -8,6 +8,7 @@ import { createSqlEventStore } from "../adapters/sql/sqlEventStore.js";
 import { createSqlFollowStore } from "../adapters/sql/sqlFollowStore.js";
 import { createSqlLightStore } from "../adapters/sql/sqlLightStore.js";
 import { createSqlMemberStore } from "../adapters/sql/sqlMemberStore.js";
+import { createSqlPresenceCheckStore } from "../adapters/sql/sqlPresenceCheckStore.js";
 import { createSqlSettingsStore } from "../adapters/sql/sqlSettingsStore.js";
 import type { SqlExecutor } from "../adapters/sql/sqlExecutor.js";
 import { createWebCryptoSecrets } from "../adapters/webCryptoSecrets.js";
@@ -26,6 +27,7 @@ export const createTeamDependencies = (runtime: TeamRuntime): AuthDependencies =
   lights: createSqlLightStore(runtime.sql),
   follows: createSqlFollowStore(runtime.sql),
   events: createSqlEventStore(runtime.sql),
+  presenceChecks: createSqlPresenceCheckStore(runtime.sql),
   credentials: createSqlCredentialStore(runtime.sql),
   settings: createSqlSettingsStore(runtime.sql, runtime.configuration.defaultSettings),
   secrets: createWebCryptoSecrets(),

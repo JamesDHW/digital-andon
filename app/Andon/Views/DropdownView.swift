@@ -1,7 +1,7 @@
 import AndonKit
 import SwiftUI
 
-/// The menu bar dropdown: whoever is stopped first, then everyone else you follow, then your own light.
+/// The menu bar dropdown: whoever is blocked first, then everyone else you follow, then your own light.
 struct DropdownView: View {
     @ObservedObject var teamStore: TeamStore
     let actions: AndonActions
@@ -29,9 +29,9 @@ struct DropdownView: View {
     private func teamSections(_ model: DropdownModel, state: TeamState, now: Date) -> some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 2) {
-                DropdownHeader(stoppedCount: model.red.count, state: state)
+                DropdownHeader(blockedCount: model.red.count, state: state)
                 DropdownSection(title: nil, rows: model.red, now: now, actions: actions)
-                DropdownSection(title: "Watch · working through it", rows: model.amber, now: now, actions: actions)
+                DropdownSection(title: "Assist · might need help", rows: model.amber, now: now, actions: actions)
                 FoldedSection(title: "Clear", colour: .green, rows: model.green, now: now, actions: actions, isExpanded: $isClearExpanded)
                 FoldedSection(title: "Off or offline", colour: nil, rows: model.off, now: now, actions: actions, isExpanded: $isOffExpanded)
                 EveryoneElseRow(rows: model.everyoneElse, now: now, actions: actions, isExpanded: $isEveryoneElseExpanded)
@@ -62,16 +62,16 @@ struct DropdownView: View {
 }
 
 struct DropdownHeader: View {
-    let stoppedCount: Int
+    let blockedCount: Int
     let state: TeamState
 
     var body: some View {
         HStack {
-            if stoppedCount > 0 {
-                SectionTitle(text: "Stopped, needs help · \(stoppedCount)", colour: LightStyle.colour(.red))
+            if blockedCount > 0 {
+                SectionTitle(text: "Blocked, needs help · \(blockedCount)", colour: LightStyle.colour(.red))
             }
-            if stoppedCount == 0 {
-                SectionTitle(text: "Nobody is stopped", colour: .secondary)
+            if blockedCount == 0 {
+                SectionTitle(text: "Nobody is blocked", colour: .secondary)
             }
             Spacer()
             Text("\(state.follows.count) followed · \(state.follows.filter(state.online.contains).count) online")

@@ -13,10 +13,14 @@ struct ProfileEditor: View {
         HStack(alignment: .center, spacing: 16) {
             AvatarView(member: member, colour: nil, diameter: 64)
             VStack(alignment: .leading, spacing: 6) {
-                TextField("Name", text: $name)
-                    .textFieldStyle(.roundedBorder)
-                    .font(.title3)
-                    .onSubmit(saveName)
+                HStack {
+                    TextField("Name", text: $name)
+                        .textFieldStyle(.roundedBorder)
+                        .font(.title3)
+                        .onSubmit(saveName)
+                    Button("Save", action: saveName)
+                        .disabled(!hasUnsavedName)
+                }
                 Text(member.email).foregroundStyle(.secondary)
                 if let message {
                     Text(message).font(.caption).foregroundStyle(.secondary)
@@ -26,11 +30,15 @@ struct ProfileEditor: View {
         .onAppear { name = member.name }
     }
 
+    private var trimmedName: String { name.trimmingCharacters(in: .whitespacesAndNewlines) }
+
+    private var hasUnsavedName: Bool { !trimmedName.isEmpty && trimmedName != member.name }
+
     private func saveName() {
-        let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmedName.isEmpty, trimmedName != member.name else { return }
+        guard hasUnsavedName else { return }
+        let newName = trimmedName
         Task {
-            switch await accountController.updateProfile(ProfileChange(name: trimmedName)) {
+            switch await accountController.updateProfile(ProfileChange(name: newName)) {
             case .success:
                 message = "Name saved."
             case let .failure(error):

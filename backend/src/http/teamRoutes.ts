@@ -1,15 +1,16 @@
 import { InvalidRequestError } from "../errors/andonError.js";
 import { listEvents } from "../application/admin/listEvents.js";
 import { removeMember } from "../application/admin/removeMember.js";
+import { greetMember } from "../application/greetMember.js";
+import { readHistory } from "../application/history/readHistory.js";
 import { changeTeamSettings, readTeamSettings } from "../application/admin/teamSettings.js";
 import { isMemberId } from "../domain/memberId.js";
 import { authenticatedMember } from "./authenticatedMember.js";
 import { toEventsCsv } from "./eventsCsv.js";
-import { EVENT_PAGE_DEFAULT_LIMIT, EVENT_PAGE_MAX_LIMIT } from "./http.constants.js";
 import { respondOnly, type HttpContext, type HttpOutcome } from "./httpOutcome.js";
 import { errorResponse, jsonResponse } from "./httpResponses.js";
-import { parseJsonBody } from "./requestBody.js";
-import { settingsBodySchema } from "./requestSchemas.js";
+import { parseJsonBody, parseQuery } from "./requestBody.js";
+import { eventsQuerySchema, historyQuerySchema, settingsBodySchema } from "./requestSchemas.js";
 
 export const handleListMembers = async (context: HttpContext): Promise<HttpOutcome> => {
   const member = await authenticatedMember(context);
@@ -55,19 +56,44 @@ export const handleListEvents = async (context: HttpContext): Promise<HttpOutcom
   const admin = await authenticatedMember(context);
   if (admin instanceof Error) return respondOnly(errorResponse(admin));
 
-  const events = listEvents(context.dependencies, admin, readEventQuery(context.url));
-  if (events instanceof Error) return respondOnly(errorResponse(events));
+  const query = parseQuery(context.url, eventsQuerySchema);
+  if (query instanceof Error) return respondOnly(errorResponse(query));
 
-  const isCsvRequested = context.url.searchParams.get("format") === "csv";
-  if (isCsvRequested) return respondOnly(new Response(toEventsCsv(events), { headers: { "content-type": "text/csv; charset=utf-8" } }));
-  return respondOnly(jsonResponse({ events }));
+  const events = listEvents(context.dependencies, admin, {
+    afterId: query.afterId,
+    limit: query.limit,
+    from: query.from ?? null,
+    to: query.to ?? null,
+    memberIds: query.memberIds ?? null,
+  });
+  if (events instanceof Error) return respondOnly(errorResponse(events));
+  if (query.format === "json") return respondOnly(jsonResponse({ events }));
+
+  const members = context.dependencies.members.list();
+  if (members instanceof Error) return respondOnly(errorResponse(members));
+  return respondOnly(new Response(toEventsCsv(events, members), { headers: { "content-type": "text/csv; charset=utf-8" } }));
 };
 
-const readEventQuery = (url: URL): { readonly afterId: number; readonly limit: number } => {
-  const afterId = Number(url.searchParams.get("afterId") ?? "0");
-  const limit = Number(url.searchParams.get("limit") ?? String(EVENT_PAGE_DEFAULT_LIMIT));
-  return {
-    afterId: Number.isSafeInteger(afterId) ? afterId : 0,
-    limit: Math.min(Math.max(Number.isSafeInteger(limit) ? limit : EVENT_PAGE_DEFAULT_LIMIT, 1), EVENT_PAGE_MAX_LIMIT),
-  };
+/** Everything the web app shows: the greeting the Mac app gets when it connects, plus the team's name. */
+export const handleSnapshot = async (context: HttpContext): Promise<HttpOutcome> => {
+  const member = await authenticatedMember(context);
+  if (member instanceof Error) return respondOnly(errorResponse(member));
+
+  const snapshot = greetMember(context.dependencies, member.id);
+  if (snapshot instanceof Error) return respondOnly(errorResponse(snapshot));
+  const settings = context.dependencies.settings.load();
+  if (settings instanceof Error) return respondOnly(errorResponse(settings));
+  return respondOnly(jsonResponse({ ...snapshot, teamName: settings.teamName }));
+};
+
+export const handleHistory = async (context: HttpContext): Promise<HttpOutcome> => {
+  const member = await authenticatedMember(context);
+  if (member instanceof Error) return respondOnly(errorResponse(member));
+
+  const query = parseQuery(context.url, historyQuerySchema);
+  if (query instanceof Error) return respondOnly(errorResponse(query));
+
+  const history = readHistory(context.dependencies, query);
+  if (history instanceof Error) return respondOnly(errorResponse(history));
+  return respondOnly(jsonResponse(history));
 };

@@ -2,8 +2,13 @@ name = "andon"
 main = "src/runtime/worker.ts"
 compatibility_date = "2026-10-01"
 
+# The web app (Team, Timeline, Export, Settings), built from web/ before every deploy and `wrangler dev`.
+[build]
+command = "pnpm run build:web"
+
 [assets]
-directory = "./public"
+directory = "./web/dist"
+binding = "ASSETS"
 not_found_handling = "none"
 
 [[durable_objects.bindings]]

@@ -12,3 +12,8 @@ export const DEFAULT_EMAIL_FROM = "Digital Andon <andon@example.com>";
 export const TEAM_PATH_PREFIXES = ["/auth/", "/me", "/team/", "/ws", "/dev/"] as const;
 export const NOT_FOUND_STATUS = 404;
 export const FOUND_REDIRECT_STATUS = 302;
+export const MOVED_PERMANENTLY_STATUS = 301;
+/** Pages of the single-page web app: each serves its index.html, and the app shows the right page. */
+export const WEB_APP_PAGES = ["/team", "/timeline", "/export", "/settings"] as const;
+/** The admin page before the web app replaced it. */
+export const OLD_ADMIN_PATHS = ["/admin", "/admin/", "/join", "/join/"] as const;

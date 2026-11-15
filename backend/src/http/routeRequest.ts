@@ -1,4 +1,4 @@
-import { handleCodeRequest, handleCodeVerify, handleDevSignIn, handleInvite, handleRedeem } from "./authRoutes.js";
+import { handleCodeRequest, handleCodeVerify, handleDevSignIn } from "./authRoutes.js";
 import { handleGoogleCallback, handleGoogleStart } from "./googleRoutes.js";
 import { MEMBER_PATH_PATTERN } from "./http.constants.js";
 import { respondOnly, type HttpContext, type HttpOutcome } from "./httpOutcome.js";
@@ -6,20 +6,18 @@ import { notFoundResponse } from "./httpResponses.js";
 import { handleGetFollows, handleGetMe, handlePatchMe, handlePutFollows } from "./meRoutes.js";
 import {
   handleGetSettings,
+  handleHistory,
   handleListEvents,
   handleListMembers,
   handlePatchSettings,
   handleRemoveMember,
+  handleSnapshot,
 } from "./teamRoutes.js";
 
 /** Every JSON endpoint the team Durable Object serves; WebSocket upgrades are handled by the runtime. */
 export const routeRequest = async (context: HttpContext): Promise<HttpOutcome> => {
   const route = `${context.request.method} ${context.url.pathname}`;
   switch (route) {
-    case "POST /auth/invite":
-      return handleInvite(context);
-    case "POST /auth/redeem":
-      return handleRedeem(context);
     case "POST /auth/code/request":
       return handleCodeRequest(context);
     case "POST /auth/code/verify":
@@ -44,6 +42,10 @@ export const routeRequest = async (context: HttpContext): Promise<HttpOutcome> =
       return handlePatchSettings(context);
     case "GET /team/events":
       return handleListEvents(context);
+    case "GET /team/snapshot":
+      return handleSnapshot(context);
+    case "GET /team/history":
+      return handleHistory(context);
     case "POST /dev/sign-in":
       return handleDevSignIn(context);
     default:

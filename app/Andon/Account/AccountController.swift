@@ -3,7 +3,7 @@ import AppKit
 import Combine
 import SystemConfiguration
 
-/// Who this Mac is signed in as, and every account-level request: Google sign-in, invites, email codes, your name and follows.
+/// Who this Mac is signed in as, and every account-level request: Google sign-in, email codes, your name and follows.
 @MainActor
 final class AccountController: ObservableObject {
     @Published private(set) var session: AccountSession?
@@ -20,11 +20,6 @@ final class AccountController: ObservableObject {
         self.isDevelopmentSession = environment.developmentSession != nil
         self.deviceName = Self.currentDeviceName()
         self.session = environment.developmentSession ?? sessionStore.load()
-    }
-
-    func join(_ invitation: JoinInvitation) async -> Result<Void, AndonError> {
-        let signedIn = await transport.send(APIRequest.redeemInvite(invitation, deviceName: deviceName), expecting: SignedInDevice.self)
-        return signedIn.flatMap { device in signIn(AccountSession(server: invitation.server, deviceToken: device.deviceToken)) }
     }
 
     /// Anyone on one of the team's allowed domains joins this way on their own; their Google photo comes with them.

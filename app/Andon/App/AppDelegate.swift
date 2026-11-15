@@ -59,13 +59,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         actions.sendPendingChange()
     }
 
-    /// andon://join links from the invite page.
-    func application(_ application: NSApplication, open urls: [URL]) {
-        guard let invitation = urls.lazy.compactMap({ JoinInvitation.parse($0.absoluteString) }).first else { return }
-        let model = showOnboarding()
-        model.joinFromLink(invitation)
-    }
-
     private func wireActions(to statusItemController: StatusItemController) {
         actions.openSettings = { [weak self] in self?.showSettings() }
         actions.openOnboarding = { [weak self] in _ = self?.showOnboarding() }
@@ -95,7 +88,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 guard let self else { return }
                 guard let session else {
                     self.teamStore.stop()
-                    self.onboardingModel?.show(.invite)
+                    self.onboardingModel?.show(.welcome)
                     self.showOnboarding()
                     return
                 }

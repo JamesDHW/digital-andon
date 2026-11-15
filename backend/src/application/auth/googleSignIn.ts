@@ -1,5 +1,5 @@
 import { EmailNotAllowedError, InvalidCodeError, NotFoundError, type AndonError } from "../../errors/andonError.js";
-import { canJoinWithoutInvite, normaliseEmail } from "../../domain/emailAddress.js";
+import { canJoin, normaliseEmail } from "../../domain/emailAddress.js";
 import { MEMBER_NAME_MAX_LENGTH } from "../../domain/member.constants.js";
 import type { Member, MemberRole } from "../../domain/member.js";
 import { toEveryone, type Delivery } from "../../protocol/serverMessage.js";
@@ -122,7 +122,7 @@ const newcomerRole = (dependencies: AuthDependencies, email: string): MemberRole
 
   const settings = dependencies.settings.load();
   if (settings instanceof Error) return settings;
-  if (!canJoinWithoutInvite(email, settings.allowedDomains)) return new EmailNotAllowedError();
+  if (!canJoin(email, settings.allowedDomains)) return new EmailNotAllowedError();
 
   return "member";
 };

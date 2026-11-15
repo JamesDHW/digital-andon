@@ -1,6 +1,7 @@
 import { authenticateDevice } from "../application/auth/authenticate.js";
 import type { AuthDependencies } from "../application/auth/authDependencies.js";
 import { greetMember } from "../application/greetMember.js";
+import { noteConnected } from "../application/presence/offlineLights.js";
 import type { MemberId } from "../domain/memberId.js";
 import { toEveryone } from "../protocol/serverMessage.js";
 import { errorResponse } from "../http/httpResponses.js";
@@ -21,6 +22,8 @@ export const acceptTeamSocket = async (state: DurableObjectState, dependencies: 
   if (member instanceof Error) return errorResponse(member);
 
   const wasOnline = onlineMemberIds(state).includes(member.id);
+  const cancelled = noteConnected(dependencies, member.id);
+  if (cancelled instanceof Error) return errorResponse(cancelled);
   const socketPair = new WebSocketPair();
   state.acceptWebSocket(socketPair[1], [member.id]);
 

@@ -2,7 +2,7 @@ import AndonKit
 import Foundation
 
 /// Your light changes on your own screen the moment you change it, but only reaches everyone else once it has
-/// settled for a few seconds. Stepping Stop ↓ ↓ is sent as one change, nobody is notified about a colour you only
+/// settled for a few seconds. Stepping Blocked ↓ ↓ is sent as one change, nobody is notified about a colour you only
 /// passed through, and landing back where you started sends nothing.
 @MainActor
 final class LightSender {

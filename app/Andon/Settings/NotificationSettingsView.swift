@@ -1,7 +1,7 @@
 import AndonKit
 import SwiftUI
 
-/// By default only a red earns a banner, with one reminder if they are still stopped. Banners go as soon as they leave red.
+/// By default only a red earns a banner, with one reminder if they are still blocked. Banners go as soon as they leave red.
 struct NotificationSettingsView: View {
     @ObservedObject var preferencesStore: PreferencesStore
 
@@ -10,15 +10,15 @@ struct NotificationSettingsView: View {
     var body: some View {
         Form {
             Section {
-                Toggle("Colours only — no banners or sounds", isOn: $preferencesStore.preferences.notifications.isColoursOnly)
+                Toggle("Colours only – no banners or sounds", isOn: $preferencesStore.preferences.notifications.isColoursOnly)
             }
             Section("When someone you follow goes to…") {
-                alertPicker("Stop (red)", selection: $preferencesStore.preferences.notifications.red)
-                alertPicker("Watch (amber)", selection: $preferencesStore.preferences.notifications.amber)
+                alertPicker("Blocked (red)", selection: $preferencesStore.preferences.notifications.red)
+                alertPicker("Assist (amber)", selection: $preferencesStore.preferences.notifications.amber)
                 alertPicker("Clear (green)", selection: $preferencesStore.preferences.notifications.green)
             }
             .disabled(preferencesStore.preferences.notifications.isColoursOnly)
-            Section("Still stopped") {
+            Section("Still blocked") {
                 Picker("Remind me once after", selection: $preferencesStore.preferences.notifications.reminderMinutes) {
                     ForEach(Self.reminderChoices, id: \.self) { minutes in
                         Text(minutes == 0 ? "Never" : "\(minutes) minutes").tag(minutes)

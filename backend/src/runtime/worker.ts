@@ -1,9 +1,12 @@
 import { readDeploymentConfiguration, type AndonEnvironment } from "./andonEnvironment.js";
 import {
   FOUND_REDIRECT_STATUS,
+  MOVED_PERMANENTLY_STATUS,
   NOT_FOUND_STATUS,
+  OLD_ADMIN_PATHS,
   TEAM_OBJECT_NAME,
   TEAM_PATH_PREFIXES,
+  WEB_APP_PAGES,
 } from "./runtime.constants.js";
 
 export { TeamObject } from "./teamObject.js";
@@ -20,7 +23,14 @@ const routeWorkerRequest = async (request: Request, environment: AndonEnvironmen
   }
 };
 
+/** Files in web/dist are served before the Worker runs; what reaches here is the API or a page of the web app. */
 const routeResourceRequest = async (request: Request, url: URL, environment: AndonEnvironment): Promise<Response> => {
+  const isWebAppPage = WEB_APP_PAGES.some((page) => page === url.pathname);
+  if (isWebAppPage) return environment.ASSETS.fetch(new Request(new URL("/", url), request));
+
+  const isOldAdminPage = OLD_ADMIN_PATHS.some((path) => path === url.pathname);
+  if (isOldAdminPage) return Response.redirect(new URL("/team", url).toString(), MOVED_PERMANENTLY_STATUS);
+
   const isTeamPath = TEAM_PATH_PREFIXES.some((prefix) => url.pathname.startsWith(prefix));
   if (!isTeamPath) return new Response("Not found", { status: NOT_FOUND_STATUS });
 

@@ -12,6 +12,13 @@ export const parseJsonBody = async <Body>(request: Request, bodySchema: z.ZodTyp
   return parsed.data;
 };
 
+/** Query strings are flat text, so schemas coerce numbers and split lists themselves. */
+export const parseQuery = <Query>(url: URL, querySchema: z.ZodType<Query>): Query | AndonError => {
+  const parsed = querySchema.safeParse(Object.fromEntries(url.searchParams));
+  if (!parsed.success) return new InvalidRequestError(z.prettifyError(parsed.error));
+  return parsed.data;
+};
+
 /** Accepts the device token as a bearer header. */
 export const bearerToken = (request: Request): string | null => {
   const authorization = request.headers.get("authorization") ?? "";

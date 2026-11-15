@@ -33,7 +33,7 @@ struct ConnectionBanner: View {
         case .connecting:
             Label("Connecting…", systemImage: "arrow.triangle.2.circlepath").font(.callout).foregroundStyle(.secondary)
         case .disconnected:
-            Label("Offline — reconnecting. Lights may be out of date.", systemImage: "wifi.slash").font(.callout).foregroundStyle(.secondary)
+            Label("Offline – reconnecting. Lights may be out of date.", systemImage: "wifi.slash").font(.callout).foregroundStyle(.secondary)
         case .signedOut:
             HStack {
                 Text("Join your team to see their lights.").font(.callout)

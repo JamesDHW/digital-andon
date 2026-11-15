@@ -2,19 +2,17 @@ import AndonKit
 import Combine
 import Foundation
 
-/// Signing in is one click with a work Google account. An invite link or an emailed code still work as fallbacks.
+/// Signing in is one click with a work Google account. An emailed code still works as a fallback.
 @MainActor
 final class OnboardingModel: ObservableObject {
     enum Step: Equatable {
         case welcome
-        case invite
         case email
         case code
         case profile
     }
 
     @Published var step: Step = .welcome
-    @Published var inviteText = ""
     @Published var serverText: String
     @Published var email = ""
     @Published var code = ""
@@ -29,20 +27,6 @@ final class OnboardingModel: ObservableObject {
     }
 
     var isServerFieldShown: Bool { serverText.isEmpty || URL(string: serverText)?.host == nil }
-
-    func join() {
-        guard let invitation = JoinInvitation.parse(inviteText) else {
-            problem = "That doesn't look like an invite link. It starts with https:// and contains “code=”."
-            return
-        }
-        run { await self.accountController.join(invitation) } onSuccess: { self.step = .profile }
-    }
-
-    /// Opened from an andon://join link: join straight away.
-    func joinFromLink(_ invitation: JoinInvitation) {
-        inviteText = "andon://join?server=\(invitation.server.absoluteString)&code=\(invitation.code)"
-        run { await self.accountController.join(invitation) } onSuccess: { self.step = .profile }
-    }
 
     func signInWithGoogle() {
         guard let server = enteredServer() else { return }
