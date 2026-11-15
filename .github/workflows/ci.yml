@@ -24,6 +24,9 @@ jobs:
           node-version: 24
           cache: pnpm
           cache-dependency-path: backend/pnpm-lock.yaml
+      # architecture-rules is a public GitHub dependency that the lockfile records as an SSH address;
+      # runners have no SSH key, so fetch it over HTTPS instead.
+      - run: git config --global url."https://github.com/".insteadOf "git@github.com:"
       - run: pnpm install --frozen-lockfile
       - run: pnpm run typecheck
       - run: pnpm run architecture
