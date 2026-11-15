@@ -1,4 +1,3 @@
-import { handleApiPull } from "./apiRoutes.js";
 import { handleCodeRequest, handleCodeVerify, handleDevSignIn, handleInvite, handleRedeem } from "./authRoutes.js";
 import { handleGoogleCallback, handleGoogleStart } from "./googleRoutes.js";
 import { MEMBER_PATH_PATTERN } from "./http.constants.js";
@@ -11,7 +10,6 @@ import {
   handleListMembers,
   handlePatchSettings,
   handleRemoveMember,
-  handleRotateApiKey,
 } from "./teamRoutes.js";
 
 /** Every JSON endpoint the team Durable Object serves; WebSocket upgrades are handled by the runtime. */
@@ -44,12 +42,8 @@ export const routeRequest = async (context: HttpContext): Promise<HttpOutcome> =
       return handleGetSettings(context);
     case "PATCH /team/settings":
       return handlePatchSettings(context);
-    case "POST /team/api-key":
-      return handleRotateApiKey(context);
     case "GET /team/events":
       return handleListEvents(context);
-    case "POST /api/pull":
-      return handleApiPull(context);
     case "POST /dev/sign-in":
       return handleDevSignIn(context);
     default:

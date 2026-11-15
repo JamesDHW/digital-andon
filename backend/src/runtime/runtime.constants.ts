@@ -9,6 +9,6 @@ export const UPGRADE_REQUIRED_STATUS = 426;
 export const LOCAL_ORIGIN = "http://localhost:8787";
 export const DEFAULT_TEAM_NAME = "Team";
 export const DEFAULT_EMAIL_FROM = "Digital Andon <andon@example.com>";
-export const TEAM_PATH_PREFIXES = ["/auth/", "/me", "/team/", "/api/", "/ws", "/dev/"] as const;
+export const TEAM_PATH_PREFIXES = ["/auth/", "/me", "/team/", "/ws", "/dev/"] as const;
 export const NOT_FOUND_STATUS = 404;
 export const FOUND_REDIRECT_STATUS = 302;

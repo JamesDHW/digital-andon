@@ -37,7 +37,7 @@ export const createTestTeam = (options: { readonly allowedDomains?: readonly str
     follows: createSqlFollowStore(sql),
     events: createSqlEventStore(sql),
     credentials: createSqlCredentialStore(sql),
-    settings: createSqlSettingsStore(sql, { teamName: "Test team", allowedDomains: options.allowedDomains ?? [], apiKeyHash: null }),
+    settings: createSqlSettingsStore(sql, { teamName: "Test team", allowedDomains: options.allowedDomains ?? [] }),
     secrets: createFakeSecrets(),
     mailer,
     now: clock.now,

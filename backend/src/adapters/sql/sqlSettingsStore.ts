@@ -11,7 +11,6 @@ const settingsRowSchema = z.object({ value: z.string() });
 const teamSettingsSchema = z.object({
   teamName: z.string(),
   allowedDomains: z.array(z.string()).readonly(),
-  apiKeyHash: z.string().nullable(),
 });
 
 /** Settings never saved yet read as the deployment's defaults. */

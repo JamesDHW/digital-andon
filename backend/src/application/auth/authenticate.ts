@@ -16,12 +16,3 @@ export const authenticateDevice = async (dependencies: AuthDependencies, deviceT
 
   return member;
 };
-
-/** CI and alerting pull lights with the team API key instead of a device. */
-export const isValidApiKey = async (dependencies: AuthDependencies, apiKey: string): Promise<boolean | AndonError> => {
-  const settings = dependencies.settings.load();
-  if (settings instanceof Error) return settings;
-  if (settings.apiKeyHash === null) return false;
-
-  return settings.apiKeyHash === (await dependencies.secrets.hash(apiKey));
-};

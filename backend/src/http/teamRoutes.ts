@@ -1,7 +1,7 @@
 import { InvalidRequestError } from "../errors/andonError.js";
 import { listEvents } from "../application/admin/listEvents.js";
 import { removeMember } from "../application/admin/removeMember.js";
-import { changeTeamSettings, readTeamSettings, rotateApiKey } from "../application/admin/teamSettings.js";
+import { changeTeamSettings, readTeamSettings } from "../application/admin/teamSettings.js";
 import { isMemberId } from "../domain/memberId.js";
 import { authenticatedMember } from "./authenticatedMember.js";
 import { toEventsCsv } from "./eventsCsv.js";
@@ -49,15 +49,6 @@ export const handlePatchSettings = async (context: HttpContext): Promise<HttpOut
   const settings = changeTeamSettings(context.dependencies, admin, body);
   if (settings instanceof Error) return respondOnly(errorResponse(settings));
   return respondOnly(jsonResponse(settings));
-};
-
-export const handleRotateApiKey = async (context: HttpContext): Promise<HttpOutcome> => {
-  const admin = await authenticatedMember(context);
-  if (admin instanceof Error) return respondOnly(errorResponse(admin));
-
-  const apiKey = await rotateApiKey(context.dependencies, admin);
-  if (apiKey instanceof Error) return respondOnly(errorResponse(apiKey));
-  return respondOnly(jsonResponse({ apiKey }, 201));
 };
 
 export const handleListEvents = async (context: HttpContext): Promise<HttpOutcome> => {

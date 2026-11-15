@@ -23,10 +23,4 @@ export const settingsBodySchema = z.object({
   allowedDomains: z.array(z.string().trim().min(1)).optional(),
 });
 
-export const apiPullBodySchema = z.object({
-  memberId: memberIdSchema,
-  colour: colourSchema,
-  status: z.string().max(STATUS_MAX_LENGTH * 2).nullable().optional(),
-});
-
 export const devSignInBodySchema = z.object({ email: z.email(), name: nameSchema });

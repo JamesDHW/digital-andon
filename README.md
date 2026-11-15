@@ -205,15 +205,6 @@ spctl --assess --type open --context context:primary-signature -v Digital-Andon.
 ## Observability hooks
 
 - **Event log:** `/admin` shows median time stopped (until help arrives) and time to unblock over 28 days and downloads the full log as CSV. `GET /team/events?afterId=0&limit=5000[&format=csv]` with an admin token returns the same data.
-- **Pull a light from CI or alerting:** create a key in `/admin` → Integrations, then:
-
-```bash
-curl -X POST https://andon.<…>.workers.dev/api/pull \
-  -H "authorization: Bearer $ANDON_API_KEY" -H "content-type: application/json" \
-  -d '{"memberId":"<member id>","colour":"red","status":"main is failing"}'
-```
-
-A good pattern is a "CI" member, invited like anyone else, that leads follow.
 
 ## Troubleshooting
 

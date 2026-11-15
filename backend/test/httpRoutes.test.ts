@@ -8,7 +8,6 @@ import { TEST_ORIGIN } from "./support/testTeam.constants.js";
 const deviceResponseSchema = z.object({ deviceToken: z.string() });
 const inviteResponseSchema = z.object({ joinLink: z.string() });
 const followsResponseSchema = z.object({ memberIds: z.array(z.string()) });
-const apiKeyResponseSchema = z.object({ apiKey: z.string() });
 
 const send = async (team: TestTeam, method: string, path: string, options: { readonly token?: string; readonly body?: unknown } = {}) => {
   const headers = new Headers({ "content-type": "application/json" });
@@ -90,21 +89,6 @@ describe("HTTP endpoints", () => {
     const team = createTestTeam();
     const outcome = await send(team, "POST", "/dev/sign-in", { body: { email: "x@example.com", name: "X" } });
     expect(outcome.response.status).toBe(403);
-  });
-
-  it("lets CI pull a light with the team API key and rejects a wrong key", async () => {
-    const team = createTestTeam({ bootstrapAdminEmail: "james@example.com" });
-    const adminToken = await signInAs(team, "james@example.com");
-    const james = expectSuccess(team.dependencies.members.findByEmail("james@example.com"));
-
-    const rotated = await send(team, "POST", "/team/api-key", { token: adminToken });
-    const { apiKey } = apiKeyResponseSchema.parse(await rotated.response.json());
-
-    const pulled = await send(team, "POST", "/api/pull", { token: apiKey, body: { memberId: james?.id, colour: "red", status: "CI failing on main" } });
-    expect(pulled.response.status).toBe(200);
-    expect(pulled.deliveries).toMatchObject([{ message: { light: { colour: "red", status: "CI failing on main" } } }]);
-
-    expect((await send(team, "POST", "/api/pull", { token: "wrong", body: { memberId: james?.id, colour: "red" } })).response.status).toBe(401);
   });
 
   it("lets people change only their name: photos come from Google", async () => {

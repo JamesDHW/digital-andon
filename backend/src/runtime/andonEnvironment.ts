@@ -63,7 +63,7 @@ export const readDeploymentConfiguration = (environment: AndonEnvironment): Depl
     publicOrigin: blankAsNull(variables.PUBLIC_ORIGIN),
     downloadUrl: blankAsNull(variables.DOWNLOAD_URL),
     isDevelopmentMode: variables.DEV_MODE === "true",
-    defaultSettings: { teamName: blankAsNull(variables.TEAM_NAME) ?? DEFAULT_TEAM_NAME, allowedDomains, apiKeyHash: null },
+    defaultSettings: { teamName: blankAsNull(variables.TEAM_NAME) ?? DEFAULT_TEAM_NAME, allowedDomains },
     google: readGoogleClient(variables.GOOGLE_CLIENT_ID, variables.GOOGLE_CLIENT_SECRET),
   };
 };

@@ -59,7 +59,6 @@ const loadMembers = async () => {
   session.members = members;
   const rows = members.map((member) => {
     const row = document.createElement("tr");
-    row.title = `Member id (for /api/pull): ${member.id}`;
     for (const text of [member.name, member.email, member.role]) {
       const cell = document.createElement("td");
       cell.textContent = text;
@@ -220,20 +219,6 @@ element("settings-form").addEventListener("submit", async (event) => {
   try {
     await api("PATCH", "/team/settings", { teamName: element("team-name").value, allowedDomains });
     showMessage("console-message", "Settings saved.");
-  } catch (failure) {
-    showMessage("console-message", failure.message, true);
-  }
-});
-
-element("rotate-key").addEventListener("click", async () => {
-  if (!window.confirm("Create a new API key? The old one stops working.")) return;
-  try {
-    const { apiKey } = await api("POST", "/team/api-key");
-    element("api-key-row").hidden = false;
-    element("api-key").value = apiKey;
-    const example = element("api-example");
-    example.hidden = false;
-    example.textContent = `curl -X POST ${location.origin}/api/pull \\\n  -H "authorization: Bearer ${apiKey}" \\\n  -H "content-type: application/json" \\\n  -d '{"memberId":"<member id>","colour":"red","status":"CI failing on main"}'`;
   } catch (failure) {
     showMessage("console-message", failure.message, true);
   }
