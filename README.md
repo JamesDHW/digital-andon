@@ -161,7 +161,7 @@ Anyone whose verified Google email is on an allowed domain can then join on thei
 
 **Fallbacks:** invite links (from `/admin`) and 6-digit email codes still work. Codes are sent through [Resend](https://resend.com) if `RESEND_API_KEY` is set (with `EMAIL_FROM` on a domain verified there); without it they only appear in `wrangler tail`.
 
-**Ongoing:** `.github/workflows/deploy-backend.yml` checks and deploys on every push to `main` that touches `backend/`. It needs repository secrets `CLOUDFLARE_API_TOKEN` (the "Edit Cloudflare Workers" template) and `CLOUDFLARE_ACCOUNT_ID`.
+**Ongoing:** `.github/workflows/deploy-backend.yml` checks and deploys on every push to `main` that touches `backend/`. It needs secrets `CLOUDFLARE_API_TOKEN` (the "Edit Cloudflare Workers" template) and `CLOUDFLARE_ACCOUNT_ID` in the GitHub environment `backend`.
 
 ---
 
@@ -176,7 +176,7 @@ Non-technical people install from a dmg, so it must be signed and notarised; Hom
    - an **App Store Connect API key** with the Developer role (for `notarytool`): the `.p8` file, its key ID and the issuer ID
 2. **Sparkle update keys:** after one local build, run `generate_keys` from `app/build/DerivedData/SourcePackages/artifacts/sparkle/Sparkle/bin/` (or from the Sparkle release zip). It prints the public key; export the private key with `generate_keys -x private.key`.
 3. **`app/Config/Andon.xcconfig`:** set `ANDON_BUNDLE_ID` (e.g. `uk.co.theodo.andon`), `DEVELOPMENT_TEAM`, `ANDON_DEFAULT_SERVER` (your Worker URL), `ANDON_APPCAST_URL` (`https:/$()/github.com/<org>/digital-andon/releases/latest/download/appcast.xml`) and `ANDON_SPARKLE_PUBLIC_KEY`.
-4. **GitHub secrets** (environment `release`): `APPLE_CERTIFICATE_P12_BASE64` (`base64 -i cert.p12 | pbcopy`), `APPLE_CERTIFICATE_PASSWORD`, `APPLE_TEAM_ID`, `NOTARY_KEY_ID`, `NOTARY_ISSUER_ID`, `NOTARY_KEY_P8_BASE64`, `SPARKLE_PRIVATE_KEY`.
+4. **GitHub secrets** (environment `app`): `APPLE_CERTIFICATE_P12_BASE64` (`base64 -i cert.p12 | pbcopy`), `APPLE_CERTIFICATE_PASSWORD`, `APPLE_TEAM_ID`, `NOTARY_KEY_ID`, `NOTARY_ISSUER_ID`, `NOTARY_KEY_P8_BASE64`, `SPARKLE_PRIVATE_KEY`.
 5. **Optional Homebrew tap:** create `<org>/homebrew-tap`, then set repository variable `HOMEBREW_TAP=<org>/homebrew-tap` and secret `HOMEBREW_TAP_TOKEN` (a fine-grained token with contents write on that repo only).
 6. Set `DOWNLOAD_URL` in `backend/wrangler.toml` to `https://github.com/<org>/digital-andon/releases/latest/download/Digital-Andon.dmg`, so `https://andon.<…>.workers.dev/download` always serves the latest version.
 
