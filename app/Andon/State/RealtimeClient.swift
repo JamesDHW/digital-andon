@@ -118,6 +118,7 @@ final class RealtimeClient {
         pingTimer = Timer.scheduledTimer(withTimeInterval: AppConstants.socketPingSeconds, repeats: true) { [weak self] _ in
             MainActor.assumeIsolated { self?.ping() }
         }
+        pingTimer?.tolerance = AppConstants.timerToleranceSeconds
     }
 
     private func ping() {

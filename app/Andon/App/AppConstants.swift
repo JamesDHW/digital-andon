@@ -20,9 +20,10 @@ enum AppConstants {
     static let statusItemPadding: CGFloat = 8
     /// Changes to your light show on your screen at once and reach the team after this long without another change.
     static let lightSendDelaySeconds: TimeInterval = 3
-    /// How often the menu bar re-checks the time, so a red starts breathing at ten minutes.
-    static let menuBarClockSeconds: TimeInterval = 15
-    static let pulseFrameSeconds: TimeInterval = 0.08
+    /// How late macOS may fire the one-off timer that starts a red breathing at ten minutes.
+    static let breathingTimerToleranceSeconds: TimeInterval = 1
+    /// Lets macOS fire the ping together with other work instead of waking just for it.
+    static let timerToleranceSeconds: TimeInterval = 5
     static let pulsePeriodSeconds: TimeInterval = 2
     static let socketPingText = "ping"
     static let socketPongText = "pong"

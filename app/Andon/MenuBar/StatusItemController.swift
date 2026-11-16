@@ -3,7 +3,8 @@ import AppKit
 import Combine
 import SwiftUI
 
-/// Owns the menu bar item: redraws it whenever the team, the connection, a photo or the clock changes, and shows the dropdown.
+/// Owns the menu bar item: redraws it whenever the team, the connection, a photo or the power source changes, or a red
+/// reaches ten minutes, and shows the dropdown. Nothing runs on a repeating timer; breathing is left to Core Animation.
 @MainActor
 final class StatusItemController: NSObject, NSPopoverDelegate {
     private let statusItem: NSStatusItem
@@ -12,10 +13,9 @@ final class StatusItemController: NSObject, NSPopoverDelegate {
     private let avatarCache = AvatarImageCache()
     private var inputs = MenuBarInputs(state: nil, connection: .signedOut)
     private var model = MenuBarModel.make(state: nil, connection: .signedOut)
-    private let highDynamicRangeView: HighDynamicRangeImageView
-    private var pulseTimer: Timer?
-    private var clockTimer: Timer?
-    private var pulseStartedAt = Date()
+    private let imageView: StatusImageView
+    private let powerSource: PowerSource
+    private var breathingTimer: Timer?
     private var lastClosedAt = Date.distantPast
     private var subscriptions = Set<AnyCancellable>()
     private var appearanceObservation: NSKeyValueObservation?
@@ -24,7 +24,8 @@ final class StatusItemController: NSObject, NSPopoverDelegate {
         self.teamStore = teamStore
         self.statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         self.popover = NSPopover()
-        self.highDynamicRangeView = HighDynamicRangeImageView(frame: .zero)
+        self.imageView = StatusImageView(frame: .zero)
+        self.powerSource = PowerSource()
         super.init()
         configurePopover(with: dropdown)
         configureButton()
@@ -69,9 +70,8 @@ final class StatusItemController: NSObject, NSPopoverDelegate {
         button.action = #selector(toggleDropdown(_:))
         button.sendAction(on: [.leftMouseUp, .rightMouseUp])
         button.imagePosition = .imageOnly
-        highDynamicRangeView.frame = button.bounds
-        highDynamicRangeView.isHidden = true
-        button.addSubview(highDynamicRangeView)
+        imageView.frame = button.bounds
+        button.addSubview(imageView)
         appearanceObservation = button.observe(\.effectiveAppearance) { [weak self] _, _ in
             Task { @MainActor in self?.render() }
         }
@@ -92,41 +92,53 @@ final class StatusItemController: NSObject, NSPopoverDelegate {
             .receive(on: RunLoop.main)
             .sink { [weak self] _ in self?.render() }
             .store(in: &subscriptions)
-        // A red starts breathing ten minutes in with no message from the server, so the clock has to drive it.
-        clockTimer = Timer.scheduledTimer(withTimeInterval: AppConstants.menuBarClockSeconds, repeats: true) { [weak self] _ in
-            MainActor.assumeIsolated { self?.refreshModel() }
-        }
+        powerSource.onChange = { [weak self] in self?.render() }
     }
 
     private func refreshModel() {
         let newModel = MenuBarModel.make(state: inputs.state, connection: inputs.connection, now: Date())
         guard newModel != model else { return }
         model = newModel
-        updatePulsing()
+        scheduleBreathing(at: newModel.breathesNextAt)
         render()
     }
 
+    /// A red starts breathing ten minutes in with no message from the server, so the app wakes once at that moment.
+    /// Any change replaces the timer, so a red that went green in the meantime never sets off an old one.
+    private func scheduleBreathing(at date: Date?) {
+        breathingTimer?.invalidate()
+        breathingTimer = nil
+        guard let date else { return }
+        let timer = Timer(fire: date, interval: 0, repeats: false) { [weak self] _ in
+            MainActor.assumeIsolated { self?.refreshModel() }
+        }
+        timer.tolerance = AppConstants.breathingTimerToleranceSeconds
+        RunLoop.main.add(timer, forMode: .common)
+        breathingTimer = timer
+    }
+
+    /// Draws the light at full strength, plus its breathing low point when a red has waited ten minutes.
     private func render() {
         guard let button = statusItem.button else { return }
-        let elapsed = Date().timeIntervalSince(pulseStartedAt)
-        let pulse = CGFloat((1 - cos(2 * .pi * elapsed / AppConstants.pulsePeriodSeconds)) / 2)
         let screen = button.window?.screen ?? NSScreen.main
-        let brightness = HighDynamicRangeImage.headroom(of: screen)
-        let isHighDynamicRange = brightness > 1
+        let scale = screen?.backingScaleFactor ?? 2
+        let headroom = StatusBitmap.headroom(of: screen)
+        let isBoosted = headroom > 1 && model.hasRaisedLight && powerSource.canAffordBoost
         let isDarkMenuBar = button.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
-        let rendering = LightRendering(
-            brightness: isHighDynamicRange ? brightness : 1,
-            pulse: pulse,
-            isDarkMenuBar: isDarkMenuBar
-        )
-        button.setAccessibilityLabel(StatusImageRenderer.accessibilityDescription(for: model))
         let photos = currentPhotos()
-
-        let highDynamicRangeImage = isHighDynamicRange
-            ? HighDynamicRangeImage.make(for: model, rendering: rendering, photos: photos, backingScale: screen?.backingScaleFactor ?? 2)
-            : nil
-        guard let highDynamicRangeImage else { return showStandardImage(StatusImageRenderer.image(for: model, rendering: rendering, photos: photos)) }
-        showHighDynamicRangeImage(highDynamicRangeImage)
+        let drawFrame = { (pulse: CGFloat) in
+            StatusBitmap.make(
+                for: self.model,
+                rendering: LightRendering(brightness: isBoosted ? headroom : 1, pulse: pulse, isDarkMenuBar: isDarkMenuBar),
+                photos: photos,
+                backingScale: scale
+            )
+        }
+        guard let image = drawFrame(0) else { return }
+        button.setAccessibilityLabel(StatusImageRenderer.accessibilityDescription(for: model))
+        statusItem.length = StatusImageRenderer.width(for: model) + AppConstants.statusItemPadding
+        imageView.frame = button.bounds
+        imageView.show(image, dimmed: model.isBreathing ? drawFrame(1) : nil, scale: scale, isBoosted: isBoosted)
     }
 
     /// Whatever photos have arrived; asking also starts fetching any that haven't.
@@ -135,37 +147,6 @@ final class StatusItemController: NSObject, NSPopoverDelegate {
             avatarCache.image(for: person.member.avatarUrl).map { (person.id, $0) }
         }
         return Dictionary(loaded, uniquingKeysWith: { first, _ in first })
-    }
-
-    private func showStandardImage(_ image: NSImage) {
-        highDynamicRangeView.isHidden = true
-        statusItem.length = NSStatusItem.variableLength
-        statusItem.button?.image = image
-    }
-
-    /// The button keeps its size and clicks; an image view on top shows the extended-range image.
-    private func showHighDynamicRangeImage(_ image: NSImage) {
-        statusItem.button?.image = nil
-        statusItem.length = image.size.width + AppConstants.statusItemPadding
-        highDynamicRangeView.image = image
-        highDynamicRangeView.isHidden = false
-        if let button = statusItem.button {
-            highDynamicRangeView.frame = button.bounds
-        }
-    }
-
-    /// A red that has waited ten minutes breathes; otherwise nothing animates.
-    private func updatePulsing() {
-        guard model.isBreathing else {
-            pulseTimer?.invalidate()
-            pulseTimer = nil
-            return
-        }
-        guard pulseTimer == nil else { return }
-        pulseStartedAt = Date()
-        pulseTimer = Timer.scheduledTimer(withTimeInterval: AppConstants.pulseFrameSeconds, repeats: true) { [weak self] _ in
-            MainActor.assumeIsolated { self?.render() }
-        }
     }
 }
 

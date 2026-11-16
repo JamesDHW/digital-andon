@@ -48,6 +48,30 @@ final class MenuBarModelTests: XCTestCase {
         XCTAssertEqual(model.ownLight, OwnLightIndicator(colour: .red, isBreathing: true))
     }
 
+    func testWakesWhenTheEarliestWaitingRedReachesTenMinutes() {
+        let state = Fixtures.team([
+            Fixtures.light("Recent", .red, since: millisecondsAgo(minutes: 2)),
+            Fixtures.light("Earlier", .red, since: millisecondsAgo(minutes: 7)),
+            Fixtures.light("Breathing", .red, since: millisecondsAgo(minutes: 30)),
+            Fixtures.light("Helping", .amber, since: millisecondsAgo(minutes: 9)),
+        ])
+        let model = MenuBarModel.make(state: state, connection: .connected, now: now)
+        XCTAssertEqual(model.breathesNextAt, now.addingTimeInterval(3 * 60))
+    }
+
+    func testARedThatWentGreenAndBackStartsItsTenMinutesAgain() {
+        let backToRed = Fixtures.team([Fixtures.light("Stuck", .red, since: millisecondsAgo(minutes: 1))])
+        let nowGreen = Fixtures.team([Fixtures.light("Stuck", .green, since: millisecondsAgo(minutes: 0))])
+        XCTAssertNil(MenuBarModel.make(state: nowGreen, connection: .connected, now: now).breathesNextAt)
+        XCTAssertEqual(MenuBarModel.make(state: backToRed, connection: .connected, now: now).breathesNextAt, now.addingTimeInterval(9 * 60))
+    }
+
+    func testOnlyAmberOrRedCountsAsRaised() {
+        XCTAssertFalse(MenuBarModel.make(state: Fixtures.team([Fixtures.light("Priya", .green, since: 1)]), connection: .connected, now: now).hasRaisedLight)
+        XCTAssertTrue(MenuBarModel.make(state: Fixtures.team([Fixtures.light("Priya", .amber, since: 1)]), connection: .connected, now: now).hasRaisedLight)
+        XCTAssertTrue(MenuBarModel.make(state: Fixtures.team([], leadColour: .red), connection: .connected, now: now).hasRaisedLight)
+    }
+
     func testShowsNothingBeforeTheFirstHelloAndDimsWhileDisconnected() {
         XCTAssertTrue(MenuBarModel.make(state: nil, connection: .signedOut, now: now).hasNothingToShow)
         XCTAssertTrue(MenuBarModel.make(state: Fixtures.team([]), connection: .disconnected, now: now).isDimmed)

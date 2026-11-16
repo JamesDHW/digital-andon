@@ -1,19 +1,8 @@
 import AndonKit
 import AppKit
 
-/// Draws the status item. The image is deliberately not a template image: macOS would otherwise tint it monochrome.
+/// Lays out and draws the status item; StatusBitmap turns the drawing into the image the menu bar shows.
 enum StatusImageRenderer {
-    static func image(for model: MenuBarModel, rendering: LightRendering, photos: [MemberID: NSImage]) -> NSImage {
-        let size = NSSize(width: width(for: model), height: MenuBarLayout.height)
-        let image = NSImage(size: size, flipped: false) { _ in
-            draw(model, rendering: rendering, photos: photos)
-            return true
-        }
-        image.isTemplate = false
-        image.accessibilityDescription = accessibilityDescription(for: model)
-        return image
-    }
-
     static func width(for model: MenuBarModel) -> CGFloat {
         if model.hasNothingToShow { return MenuBarLayout.placeholderDiameter + MenuBarLayout.edgeInset * 2 }
         let peopleWidth = MenuBarLayout.peopleWidth(count: model.people.count)
