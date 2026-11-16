@@ -1,6 +1,6 @@
-import type { Light } from "@backend/domain/light.js";
 import type { Member } from "@backend/domain/member.js";
 import type { MemberId } from "@backend/domain/memberId.js";
+import type { WireLight } from "@backend/protocol/wireLight.js";
 import type { TeamSnapshot } from "./board.js";
 
 /** The socket messages the web app uses: the same ones the Mac app gets. */
@@ -9,11 +9,11 @@ export type LiveMessage =
       readonly type: "hello";
       readonly you: MemberId;
       readonly members: readonly Member[];
-      readonly lights: readonly Light[];
+      readonly lights: readonly WireLight[];
       readonly follows: readonly MemberId[];
       readonly online: readonly MemberId[];
     }
-  | { readonly type: "light"; readonly light: Light }
+  | { readonly type: "light"; readonly light: WireLight }
   | { readonly type: "presence"; readonly memberId: MemberId; readonly isOnline: boolean }
   | { readonly type: "member"; readonly member: Member }
   | { readonly type: "memberRemoved"; readonly memberId: MemberId }

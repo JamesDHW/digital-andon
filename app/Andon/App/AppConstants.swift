@@ -12,6 +12,7 @@ enum AppConstants {
     static let developmentServerVariable = "ANDON_API_URL"
     static let developmentTokenVariable = "ANDON_DEV_TOKEN"
     static let popoverWidth: CGFloat = 360
+    static let settingsMaxHeight: CGFloat = 460
     static let popoverReopenGuardSeconds: TimeInterval = 0.3
     static let deviceNameMaxLength = 80
     static let elapsedTimeRefreshSeconds: TimeInterval = 30
@@ -25,6 +26,9 @@ enum AppConstants {
     /// Lets macOS fire the ping together with other work instead of waking just for it.
     static let timerToleranceSeconds: TimeInterval = 5
     static let pulsePeriodSeconds: TimeInterval = 2
+    /// A helper's face is this much of the person's, and this much of it shows past the face in front.
+    static let helperScale: CGFloat = 0.78
+    static let helperOverlap: CGFloat = 0.5
     static let socketPingText = "ping"
     static let socketPongText = "pong"
 }

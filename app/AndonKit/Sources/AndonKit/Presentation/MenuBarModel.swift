@@ -22,18 +22,34 @@ public struct OwnLightIndicator: Equatable, Sendable {
 public struct PersonIndicator: Equatable, Identifiable, Sendable {
     public let member: Member
     public let colour: Colour
-    /// Red for ten minutes or more.
+    /// Red for ten minutes or more, with nobody joining them.
     public let isBreathing: Bool
     /// Their Mac has disconnected; shown faded because the light may be stale.
     public let isStale: Bool
+    /// Whoever has joined them, drawn smaller behind their face, earliest first.
+    public let helpers: [HelperIndicator]
 
     public var id: MemberID { member.id }
 
-    public init(member: Member, colour: Colour, isBreathing: Bool, isStale: Bool) {
+    public init(member: Member, colour: Colour, isBreathing: Bool, isStale: Bool, helpers: [HelperIndicator] = []) {
         self.member = member
         self.colour = colour
         self.isBreathing = isBreathing
         self.isStale = isStale
+        self.helpers = helpers
+    }
+}
+
+/// Someone who has joined a person, in their own light's colour.
+public struct HelperIndicator: Equatable, Identifiable, Sendable {
+    public let member: Member
+    public let colour: Colour
+
+    public var id: MemberID { member.id }
+
+    public init(member: Member, colour: Colour) {
+        self.member = member
+        self.colour = colour
     }
 }
 
@@ -56,24 +72,43 @@ public struct MenuBarModel: Equatable, Sendable {
         guard let state else { return MenuBarModel(ownLight: nil, people: [], isDimmed: connection != .connected, breathesNextAt: nil) }
         let yourLight = state.light(for: state.you).flatMap { $0.colour.isWorking ? $0 : nil }
         let visible = visiblePeople(in: state)
+        let isYourRedHelped = state.isHelped(state.you)
         return MenuBarModel(
-            ownLight: yourLight.map { OwnLightIndicator(colour: $0.colour, isBreathing: $0.isBreathing(at: now)) },
+            ownLight: yourLight.map { OwnLightIndicator(colour: $0.colour, isBreathing: state.isBreathing(state.you, at: now)) },
             people: visible.map { ranked in
-                PersonIndicator(member: ranked.member, colour: ranked.light.colour, isBreathing: ranked.light.isBreathing(at: now), isStale: !ranked.isOnline)
+                PersonIndicator(
+                    member: ranked.member,
+                    colour: ranked.light.colour,
+                    isBreathing: ranked.isBreathing(at: now),
+                    isStale: !ranked.isOnline,
+                    helpers: ranked.helpers.compactMap { helper in
+                        state.light(for: helper.id).map { HelperIndicator(member: helper, colour: $0.colour) }
+                    }
+                )
             },
             isDimmed: connection != .connected,
-            breathesNextAt: nextBreathingStart(of: [yourLight].compactMap { $0 } + visible.map(\.light), after: now)
+            breathesNextAt: nextBreathingStart(
+                of: (isYourRedHelped ? [] : [yourLight].compactMap { $0 }) + visible.filter { $0.helpers.isEmpty }.map(\.light),
+                after: now
+            )
         )
     }
 
     /// Off people disappear. A disconnected Mac's green is dropped too; a disconnected red or amber stays, faded.
+    /// Someone with a person you can see is drawn behind that person instead of on their own.
     private static func visiblePeople(in state: TeamState) -> [RankedMember] {
-        Ranking.followed(in: state)
+        let working = Ranking.followed(in: state)
             .filter { $0.light.colour.isWorking }
             .filter { $0.isOnline || $0.light.colour.isRaised }
+        let shownIDs = Set(working.map(\.id))
+        return working.filter { ranked in
+            guard let helping = ranked.light.helping else { return true }
+            return !shownIDs.contains(helping)
+        }
     }
 
     /// Every change of colour gives a light a new `since`, so going green and back to red starts the ten minutes again.
+    /// A red someone has joined never breathes, so it's left out.
     private static func nextBreathingStart(of lights: [Light], after now: Date) -> Date? {
         lights
             .filter { $0.colour == .red }

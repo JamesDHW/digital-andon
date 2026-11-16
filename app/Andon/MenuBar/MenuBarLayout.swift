@@ -1,6 +1,7 @@
 import AppKit
 
-/// Point sizes for the status item image: a squircle for your own light, then one ringed avatar per person.
+/// Point sizes for the status item image: a squircle for your own light, then one ringed avatar per person,
+/// with anyone who has joined them tucked behind.
 /// Up to four people sit side by side; beyond that they overlap like a facepile so the item stays compact.
 enum MenuBarLayout {
     static let height: CGFloat = 22
@@ -26,15 +27,21 @@ enum MenuBarLayout {
     static let placeholderDiameter: CGFloat = 12
     static let placeholderLineWidth: CGFloat = 1.5
 
+    /// Someone who has joined a person: a smaller face behind theirs, showing this much past the one in front.
+    static let helperDiameter: CGFloat = 16
+    static let helperStep: CGFloat = 8
+
     static var photoInset: CGFloat { ringWidth + ringToPhotoGap }
 
-    static func avatarStep(count: Int) -> CGFloat {
-        if count <= maximumSeparateAvatars { return avatarDiameter + separateAvatarGap }
-        return avatarDiameter * overlapStepFraction
+    /// How far along the next person starts: past this person and anyone tucked behind them.
+    static func groupAdvance(helperCount: Int, isSeparate: Bool) -> CGFloat {
+        let helpersWidth = CGFloat(helperCount) * helperStep
+        if isSeparate { return avatarDiameter + helpersWidth + separateAvatarGap }
+        return avatarDiameter * overlapStepFraction + helpersWidth
     }
 
-    static func peopleWidth(count: Int) -> CGFloat {
-        guard count > 0 else { return 0 }
-        return avatarDiameter + CGFloat(count - 1) * avatarStep(count: count)
+    /// Where a helper's face starts, from the left of the person they joined.
+    static func helperOffset(index: Int) -> CGFloat {
+        avatarDiameter - helperDiameter + helperStep * CGFloat(index + 1)
     }
 }

@@ -39,6 +39,27 @@ public struct TeamState: Equatable, Sendable {
         follows.contains(memberID)
     }
 
+    /// Everyone who has joined this person, earliest first.
+    public func helpers(of memberID: MemberID) -> [Member] {
+        lights.values
+            .filter { $0.helping == memberID }
+            .sorted { $0.since < $1.since }
+            .compactMap { members[$0.memberId] }
+    }
+
+    public func isHelped(_ memberID: MemberID) -> Bool {
+        lights.values.contains { $0.helping == memberID }
+    }
+
+    /// A red that has waited ten minutes with nobody joining them.
+    public func isBreathing(_ memberID: MemberID, at now: Date) -> Bool {
+        guard let light = light(for: memberID) else { return false }
+        return light.isBreathing(at: now) && !isHelped(memberID)
+    }
+
+    /// Who you've joined, if anyone.
+    public var youAreHelping: MemberID? { light(for: you)?.helping }
+
     /// Applies one server message. A hello is handled by the caller, which replaces the whole state.
     public func applying(_ message: ServerMessage) -> TeamState {
         switch message {

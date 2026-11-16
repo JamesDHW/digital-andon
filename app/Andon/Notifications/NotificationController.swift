@@ -2,18 +2,21 @@ import AndonKit
 import AppKit
 import UserNotifications
 
-/// Posts what the NotificationPlanner decides, withdraws banners once someone leaves red, and opens the dropdown on a click.
+/// Posts what the NotificationPlanner decides, withdraws banners once someone leaves red or is joined, opens the
+/// dropdown on a click, and joins the person from the banner's Join button without opening anything.
 @MainActor
 final class NotificationController: NSObject, UNUserNotificationCenterDelegate {
     var onOpen: () -> Void = {}
+    var onJoin: (MemberID) -> Void = { _ in }
 
     private let center = UNUserNotificationCenter.current()
 
     func configure() {
         center.delegate = self
-        let redCategory = UNNotificationCategory(identifier: NotificationIdentifiers.redCategory, actions: [], intentIdentifiers: [], options: [])
+        let join = UNNotificationAction(identifier: NotificationIdentifiers.joinAction, title: "Join", options: [])
+        let raisedCategory = UNNotificationCategory(identifier: NotificationIdentifiers.raisedCategory, actions: [join], intentIdentifiers: [], options: [])
         let changeCategory = UNNotificationCategory(identifier: NotificationIdentifiers.changeCategory, actions: [], intentIdentifiers: [], options: [])
-        center.setNotificationCategories([redCategory, changeCategory])
+        center.setNotificationCategories([raisedCategory, changeCategory])
     }
 
     func handle(_ intents: [NotificationIntent]) {
@@ -71,7 +74,7 @@ final class NotificationController: NSObject, UNUserNotificationCenterDelegate {
         content.title = NotificationText.title(for: announcement, isReminder: isReminder)
         content.body = announcement.status ?? NotificationText.fallbackBody(for: announcement.colour)
         content.threadIdentifier = announcement.memberID.rawValue
-        content.categoryIdentifier = announcement.colour == .red ? NotificationIdentifiers.redCategory : NotificationIdentifiers.changeCategory
+        content.categoryIdentifier = announcement.colour.isRaised ? NotificationIdentifiers.raisedCategory : NotificationIdentifiers.changeCategory
         content.userInfo = [NotificationIdentifiers.memberKey: announcement.memberID.rawValue]
         content.sound = announcement.style == .bannerAndSound ? .default : nil
         return content
@@ -82,7 +85,12 @@ final class NotificationController: NSObject, UNUserNotificationCenterDelegate {
         didReceive response: UNNotificationResponse,
         withCompletionHandler completionHandler: @escaping () -> Void
     ) {
-        Task { @MainActor in self.onOpen() }
+        let isJoin = response.actionIdentifier == NotificationIdentifiers.joinAction
+        let memberID = (response.notification.request.content.userInfo[NotificationIdentifiers.memberKey] as? String).map(MemberID.init(rawValue:))
+        Task { @MainActor in
+            guard isJoin, let memberID else { return self.onOpen() }
+            self.onJoin(memberID)
+        }
         completionHandler()
     }
 

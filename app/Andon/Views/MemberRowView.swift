@@ -2,21 +2,28 @@ import AndonKit
 import SwiftUI
 
 /// One person. Someone blocked gets a tinted card, so it's the first thing you see; go and help them.
+/// Anyone Disrupted or Blocked has a Join button, which becomes Leave once you're with them.
 struct MemberRowView: View {
     let row: DropdownRow
+    let state: TeamState
     let now: Date
     let actions: AndonActions
 
     private var member: Member { row.rankedMember.member }
     private var light: Light { row.rankedMember.light }
     private var isBlocked: Bool { light.colour == .red }
+    private var isWithYou: Bool { state.youAreHelping == member.id }
+    /// You can't join yourself, or someone who has joined you.
+    private var canJoin: Bool { light.colour.isRaised && member.id != state.you && light.helping != state.you }
 
     var body: some View {
         HStack(alignment: .center, spacing: 12) {
-            AvatarView(
+            AvatarStack(
                 member: member,
                 colour: light.colour,
-                isBreathing: light.isBreathing(at: now),
+                helpers: row.rankedMember.helpers,
+                helperColour: { state.light(for: $0)?.colour },
+                isBreathing: row.rankedMember.isBreathing(at: now),
                 isDimmed: !row.rankedMember.isOnline || light.colour == .off,
                 diameter: isBlocked ? 40 : 34
             )
@@ -28,6 +35,9 @@ struct MemberRowView: View {
                 Text(MemberStatusText.describe(row, now: now)).font(.system(size: 12)).foregroundStyle(.secondary)
             }
             Spacer(minLength: 4)
+            if canJoin {
+                joinButton
+            }
             if !row.isFollowed {
                 Button("Follow") { actions.follow(member.id) }.controlSize(.small)
             }
@@ -37,6 +47,23 @@ struct MemberRowView: View {
         .background(cardBackground)
         .contentShape(Rectangle())
         .contextMenu { contextMenu }
+    }
+
+    @ViewBuilder
+    private var joinButton: some View {
+        if isWithYou {
+            Button("Leave", action: actions.leave)
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+                .help("Stop working with \(member.name); your light goes back to what it was")
+        }
+        if !isWithYou {
+            Button("Join") { actions.join(member.id) }
+                .buttonStyle(.borderedProminent)
+                .tint(LightStyle.colour(.amber))
+                .controlSize(.small)
+                .help("Work with \(member.name): you go Disrupted until either of you goes Clear")
+        }
     }
 
     @ViewBuilder

@@ -88,7 +88,7 @@ describe("web endpoints", () => {
 
     const csv = await get(team, `/team/events?format=csv&from=${minutesIn(25)}&to=${minutesIn(60)}&memberIds=${priya.id}`, adminToken);
     const lines = (await csv.response.text()).split("\n");
-    expect(lines[0]).toBe("id,at,kind,memberId,name,colour,status,source");
+    expect(lines[0]).toBe("id,at,kind,memberId,name,colour,context,source,withMemberId,withName");
     expect(lines.slice(1).map((line) => line.split(",")[5])).toEqual(["amber", "green"]);
     expect(lines[1]).toContain(",priya,");
 

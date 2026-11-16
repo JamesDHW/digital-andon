@@ -1,18 +1,27 @@
 # Digital Andon
 
-A digital andon cord for a software team. Anyone can turn their light **Assist** (amber, "might need help") or **Blocked** (red, "need help now") from the menu bar or a keyboard shortcut. The people who follow them see it straight away in their Mac menu bar, and someone goes to help. Everything is logged, and the web app shows the whole team live and how everyone's lights have moved over time.
+A digital andon cord for a software team. Everyone's status is one of three lights, from the menu bar or a keyboard shortcut:
+
+- **Clear** (green): work is progressing as expected.
+- **Disrupted** (amber): work is progressing slower due to an unexpected complication.
+- **Blocked** (red): work cannot continue without external attention.
+
+The people who follow them see it straight away in their Mac menu bar, and someone **joins** them. Everything is logged, and the web app shows the whole team live and how everyone's lights have moved over time.
 
 ![Menu bar states](docs/menubar-preview.png)
 
-Your light is the squircle. After it comes one avatar per person you follow, whose ring is their light, most urgent first. There is no limit: past four people the avatars overlap. Photos are everyone's Google profile picture. A red that has waited 10 minutes breathes. Off hides you everywhere: your squircle disappears, and you vanish from everyone else's bar. Closing your laptop counts as Off: once your Mac has been gone for 2 minutes, the server switches your light off, so nobody is left showing Clear (or Blocked) after going home. On XDR displays (recent MacBook Pros, Pro Display XDR) amber and red are drawn brighter than white while the Mac is plugged in, because that makes macOS run the backlight harder; on battery or in Low Power Mode they're drawn at normal brightness, and green always is. Nothing redraws on a timer: breathing is a Core Animation fade. (Drawn at 8× from the same geometry the app uses.)
+Your light is the squircle. After it comes one avatar per person you follow, whose ring is their light, most urgent first. There is no limit: past four people the avatars overlap. Photos are everyone's Google profile picture. A red that has waited 10 minutes with nobody joining them breathes. Off hides you everywhere: your squircle disappears, and you vanish from everyone else's bar. Locking your screen switches you Off at once, and unlocking puts your light back as it was (Off stays Off). Closing your laptop counts as Off too: once your Mac has been gone for 2 minutes, the server switches your light off, so nobody is left showing Clear (or Blocked) after going home. On XDR displays (recent MacBook Pros, Pro Display XDR) amber and red are drawn brighter than white while the Mac is plugged in, because that makes macOS run the backlight harder; on battery or in Low Power Mode they're drawn at normal brightness, and green always is. Nothing redraws on a timer: breathing is a Core Animation fade. (Drawn at 8× from the same geometry the app uses.)
 
 | Shortcut | Does |
 |---|---|
-| ⌃⌥↑ / ⌃⌥↓ | Step your light up (Clear → Assist → Blocked) or down (Blocked → Assist → Clear) |
+| ⌃⌥↑ / ⌃⌥↓ | Step your light up (Clear → Disrupted → Blocked) or down (Blocked → Disrupted → Clear) |
 | ⌃⌥O | Off (hidden from everyone) and back on |
-| ⌃⌥S | Set your status: one line saying what you're doing (Enter sets, empty clears, Esc cancels) |
+| ⌃⌥S | Set your context: one line of what's going on (Enter sets, empty clears, Esc cancels) |
+| ⌃⌥J | Join someone: with one person Disrupted or Blocked, joins them; otherwise pick with ↑↓ and Enter, most urgent first |
 
-The dropdown has a button for each light too. Any change shows on your own screen at once and reaches the team once it has settled for 3 seconds, so Blocked ↓↓ is sent as one Blocked → Clear. Your status stays through Assist, Blocked and Off, and clears when you go back to Clear.
+The dropdown has a button for each light too. Any change shows on your own screen at once and reaches the team once it has settled for 3 seconds, so Blocked ↓↓ is sent as one Blocked → Clear. Going Blocked opens the context box straight away (leave it empty if you like). Your context stays through Disrupted, Blocked and Off, and clears when you go back to Clear. Context history is kept. The context box, the join picker and Settings all open inside the popover under the menu bar icon.
+
+**Joining.** Anyone Disrupted or Blocked has a **Join** button in the dropdown and on their notification. Joining makes you Disrupted, with the context "with <name>", and puts your face just behind theirs everywhere: the menu bar, the dropdown and the web app. Seeing red with an amber helper behind it means someone is on it; red alone means nobody is yet. A red someone has joined stops breathing, its reminder is cancelled, and it sorts behind reds nobody has reached. Several people can join the same person; joining a helper joins the person they're with, so there are never chains. You're with one person at a time: joining someone else leaves the first. When either of you goes Clear or Off (including locking your screen or closing the lid), the join ends and the helper's light goes back to what it was before they joined. Leave does the same. Every join and leave is logged, so the time from a red to its first join (the response time) is in the export.
 
 All shortcuts can be changed in Settings. By default only a red notifies, once, with one reminder after 10 minutes if they are still blocked. The banner goes away as soon as they leave red. "Colours only" turns every banner and sound off.
 
@@ -126,7 +135,7 @@ Use two Macs, or one Mac plus `pnpm fake-member`:
 4. **Blocked:** click Blocked in the dropdown. Your squircle turns red at once; about 3 seconds later your lead's bar shows your avatar ringed in red, plus a banner.
 5. **Breathing:** leave it red for 10 minutes. Your squircle and your avatar on the lead's bar start to breathe.
 6. **Reminder:** pull red again and ignore it. One reminder arrives after the configured time (set 2 minutes in Settings to test), and nothing after that.
-7. **Status:** ⌃⌥S, type, Enter. The lead sees it under your name. Go Off and back: it's still there. Go Clear: it's gone.
+7. **Context:** ⌃⌥S, type, Enter. The lead sees it under your name. Go Off and back: it's still there. Go Clear: it's gone.
 8. **Colours only:** switch it on in Settings → Notifications. A red changes the bar but makes no banner.
 9. **Off:** ⌃⌥O. Your squircle disappears and you vanish from the lead's bar. ⌃⌥O again brings you back as Clear.
 10. **Resolve:** ⌃⌥↓ until Clear. Your ring turns green and the lead's banner is withdrawn, with no new notification.
@@ -209,9 +218,9 @@ spctl --assess --type open --context context:primary-signature -v Digital-Andon.
 
 Everyone on the team signs in with Google at `https://andon.<…>.workers.dev/`. No admin has to add them: an allowed email domain is enough, and nobody else can see anything.
 
-- **Team** (everyone): a live board of every face, ringed in its light, Blocked first. Hover for the name, status and how long; click to open their timeline.
-- **Timeline** (everyone): Blocked, Assist and Clear bands, with a line per person running back in time from their face. Pick people (the ones you follow by default) and a window (presets or any start and end). Weekends are greyed, and the axis shows hours or days to fit. Above it: how often people were blocked, the median and longest block, and how many waited over 10 minutes. The address holds the people and window, so a view can be shared as a link.
-- **Export** (admins): the event log as CSV, filtered by people and time. `GET /team/events?format=csv&from=…&to=…&memberIds=…` with an admin token returns the same.
+- **Team** (everyone): a live board of every face, ringed in its light, Blocked first, with anyone who has joined them tucked behind. Hover a section title for what the light means, or a face for the name, context and how long; click to open their timeline.
+- **Timeline** (everyone): Blocked, Disrupted and Clear bands, with a line per person running back in time from their face. Pick people (the ones you follow by default) and a window (presets or any start and end). Weekends are greyed, and the axis shows hours or days to fit. Above it: how often people were blocked, the median and longest block, and how many waited over 10 minutes. The address holds the people and window, so a view can be shared as a link.
+- **Export** (admins): the event log as CSV, filtered by people and time: every change of light and context, and every join and leave (with who was joined). `GET /team/events?format=csv&from=…&to=…&memberIds=…` with an admin token returns the same.
 - **Settings** (admins): team name, allowed email domains, and removing members.
 
 ## Troubleshooting

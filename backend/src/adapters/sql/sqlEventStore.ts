@@ -4,29 +4,32 @@ import type { EventStore } from "../../application/ports/eventStore.js";
 import type { AndonEvent, RecordedEvent } from "../../domain/andonEvent.js";
 import { colourSchema, memberIdSchema } from "../../protocol/fieldSchemas.js";
 import type { EventQuery } from "../../application/ports/eventStore.js";
-import { EVENT_COLUMNS, STATUS_EVENT_KINDS, STATUS_AND_PULL_EVENT_KINDS } from "./sql.constants.js";
+import { EVENT_COLUMNS, LISTED_EVENT_KINDS, STATUS_EVENT_KINDS } from "./sql.constants.js";
 import { runStatement, selectFirstRow, selectRows, type SqlExecutor, type SqlValue } from "./sqlExecutor.js";
 
 const eventRowBase = { id: z.number(), member_id: memberIdSchema, at: z.number() };
 
-/** Statuses are stored in the column "topic", and older status events have the kind "topic": both are read as status. */
+/** Statuses are stored in the column "topic", and older status events have the kind "topic": both are read as status.
+ * A join or leave keeps the person joined in the column "note". */
 const eventRowSchema = z.union([
-  z.object({ ...eventRowBase, kind: z.literal("pull"), colour: colourSchema, topic: z.string().nullable(), source: z.enum(["app", "offline", "api"]) })
+  z.object({ ...eventRowBase, kind: z.literal("pull"), colour: colourSchema, topic: z.string().nullable(), source: z.enum(["app", "offline", "join", "api"]) })
     .transform((row): RecordedEvent => ({ id: row.id, kind: "pull", memberId: row.member_id, colour: row.colour, status: row.topic, source: row.source, at: row.at })),
   z.object({ ...eventRowBase, kind: z.enum(["status", "topic"]), topic: z.string().nullable() })
     .transform((row): RecordedEvent => ({ id: row.id, kind: "status", memberId: row.member_id, status: row.topic, at: row.at })),
+  z.object({ ...eventRowBase, kind: z.enum(["join", "leave"]), note: memberIdSchema })
+    .transform((row): RecordedEvent => ({ id: row.id, kind: row.kind, memberId: row.member_id, targetId: row.note, at: row.at })),
 ]);
 
-type EventColumns = readonly [kind: string, memberId: string, colour: SqlValue, status: SqlValue, source: SqlValue, at: number];
+type EventColumns = readonly [kind: string, memberId: string, colour: SqlValue, status: SqlValue, source: SqlValue, note: SqlValue, at: number];
 
 export const createSqlEventStore = (sql: SqlExecutor): EventStore => ({
-  append: (event) => runStatement(sql, "INSERT INTO events (kind, member_id, colour, topic, source, at) VALUES (?, ?, ?, ?, ?, ?)", ...toEventColumns(event)),
+  append: (event) => runStatement(sql, "INSERT INTO events (kind, member_id, colour, topic, source, note, at) VALUES (?, ?, ?, ?, ?, ?, ?)", ...toEventColumns(event)),
   list: (query) => {
     const filters = queryFilters(query);
     return selectRows(
       sql,
       eventRowSchema,
-      `SELECT ${EVENT_COLUMNS} FROM events WHERE id > ? AND kind IN ${STATUS_AND_PULL_EVENT_KINDS}${filters.clause} ORDER BY id LIMIT ?`,
+      `SELECT ${EVENT_COLUMNS} FROM events WHERE id > ? AND kind IN ${LISTED_EVENT_KINDS}${filters.clause} ORDER BY id LIMIT ?`,
       query.afterId,
       ...filters.bindings,
       query.limit,
@@ -68,9 +71,12 @@ const queryFilters = (query: EventQuery): QueryFilters => {
 const toEventColumns = (event: AndonEvent): EventColumns => {
   switch (event.kind) {
     case "pull":
-      return [event.kind, event.memberId, event.colour, event.status, event.source, event.at];
+      return [event.kind, event.memberId, event.colour, event.status, event.source, null, event.at];
     case "status":
-      return [event.kind, event.memberId, null, event.status, null, event.at];
+      return [event.kind, event.memberId, null, event.status, null, null, event.at];
+    case "join":
+    case "leave":
+      return [event.kind, event.memberId, null, null, null, event.targetId, event.at];
     default:
       return event satisfies never;
   }

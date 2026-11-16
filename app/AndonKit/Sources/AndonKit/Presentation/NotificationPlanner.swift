@@ -12,7 +12,7 @@ public struct Announcement: Equatable, Sendable {
 
 public enum NotificationIntent: Equatable, Sendable {
     case announce(Announcement)
-    /// They left red: remove the banner and cancel its reminder.
+    /// They left red, or someone joined them: remove the banner and cancel its reminder.
     case withdraw(MemberID)
 }
 
@@ -28,8 +28,9 @@ public enum NotificationPlanner {
     private static func intents(for memberID: MemberID, previous: Light?, current: TeamState, preferences: NotificationPreferences) -> [NotificationIntent] {
         guard let member = current.members[memberID], let light = current.light(for: memberID) else { return [] }
         let hasLeftRed = previous?.colour == .red && light.colour != .red
-        let withdrawals: [NotificationIntent] = hasLeftRed ? [.withdraw(memberID)] : []
-        guard isAnnounceable(previous: previous, current: light), let style = preferences.style(for: light.colour) else { return withdrawals }
+        let hasBeenJoined = light.colour == .red && current.isHelped(memberID)
+        let withdrawals: [NotificationIntent] = hasLeftRed || hasBeenJoined ? [.withdraw(memberID)] : []
+        guard !hasBeenJoined, isAnnounceable(previous: previous, current: light), let style = preferences.style(for: light.colour) else { return withdrawals }
         guard style != .off, !preferences.isColoursOnly else { return withdrawals }
 
         let reminderMinutes = light.colour == .red && preferences.reminderMinutes > 0 ? preferences.reminderMinutes : nil

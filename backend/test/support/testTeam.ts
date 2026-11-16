@@ -4,6 +4,7 @@ import type { AuthDependencies } from "../../src/application/auth/authDependenci
 import { createSqlCredentialStore } from "../../src/adapters/sql/sqlCredentialStore.js";
 import { createSqlEventStore } from "../../src/adapters/sql/sqlEventStore.js";
 import { createSqlFollowStore } from "../../src/adapters/sql/sqlFollowStore.js";
+import { createSqlHelpStore } from "../../src/adapters/sql/sqlHelpStore.js";
 import { createSqlLightStore } from "../../src/adapters/sql/sqlLightStore.js";
 import { createSqlMemberStore } from "../../src/adapters/sql/sqlMemberStore.js";
 import { createSqlPresenceCheckStore } from "../../src/adapters/sql/sqlPresenceCheckStore.js";
@@ -36,6 +37,7 @@ export const createTestTeam = (options: { readonly allowedDomains?: readonly str
     members: createSqlMemberStore(sql),
     lights: createSqlLightStore(sql),
     follows: createSqlFollowStore(sql),
+    helps: createSqlHelpStore(sql),
     events: createSqlEventStore(sql),
     presenceChecks: createSqlPresenceCheckStore(sql),
     credentials: createSqlCredentialStore(sql),

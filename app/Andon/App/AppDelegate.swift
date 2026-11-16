@@ -6,7 +6,6 @@ import SwiftUI
 /// The composition root: builds every part once and wires them together.
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
-    private static let settingsWindow = "settings"
     private static let onboardingWindow = "onboarding"
 
     private let environment: AppEnvironment
@@ -14,8 +13,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let accountController: AccountController
     private let teamStore: TeamStore
     private let notificationController: NotificationController
-    private let promptPresenter: TextPromptPresenter
     private let windowPresenter: WindowPresenter
+    private let navigation: DropdownNavigation
+    private let screenLockWatcher: ScreenLockWatcher
     private let actions: AndonActions
     private let updater: UpdaterController
     private var statusItemController: StatusItemController?
@@ -26,7 +26,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let environment = AppEnvironment.current
         let preferencesStore = PreferencesStore()
         let teamStore = TeamStore(realtime: RealtimeClient())
-        let promptPresenter = TextPromptPresenter()
         self.environment = environment
         self.preferencesStore = preferencesStore
         self.accountController = AccountController(
@@ -36,21 +35,33 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         )
         self.teamStore = teamStore
         self.notificationController = NotificationController()
-        self.promptPresenter = promptPresenter
         self.windowPresenter = WindowPresenter()
-        self.actions = AndonActions(teamStore: teamStore, prompt: promptPresenter)
+        self.navigation = DropdownNavigation()
+        self.screenLockWatcher = ScreenLockWatcher()
+        self.actions = AndonActions(teamStore: teamStore)
         self.updater = UpdaterController(isConfigured: environment.hasUpdateFeed)
         super.init()
     }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.mainMenu = EditMenu.make()
-        let dropdown = DropdownView(teamStore: teamStore, actions: actions)
-        let statusItemController = StatusItemController(teamStore: teamStore, dropdown: dropdown)
+        let dropdown = DropdownView(
+            teamStore: teamStore,
+            navigation: navigation,
+            accountController: accountController,
+            preferencesStore: preferencesStore,
+            actions: actions,
+            updater: updater
+        )
+        let statusItemController = StatusItemController(teamStore: teamStore, navigation: navigation, dropdown: dropdown)
         self.statusItemController = statusItemController
         wireActions(to: statusItemController)
         wireNotifications()
         HotkeyController.register(actions)
+        screenLockWatcher.start(
+            onLock: { [weak self] in self?.actions.screenLocked() },
+            onUnlock: { [weak self] in self?.actions.screenUnlocked() }
+        )
         followSession()
     }
 
@@ -60,15 +71,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func wireActions(to statusItemController: StatusItemController) {
-        actions.openSettings = { [weak self] in self?.showSettings() }
         actions.openOnboarding = { [weak self] in _ = self?.showOnboarding() }
-        actions.openDropdown = { [weak statusItemController] in statusItemController?.showDropdown() }
+        actions.showDropdown = { [weak statusItemController] page in statusItemController?.show(page) }
         actions.closeDropdown = { [weak statusItemController] in statusItemController?.closeDropdown() }
+        actions.isDropdownShown = { [weak statusItemController] in statusItemController?.isDropdownShown ?? false }
     }
 
     private func wireNotifications() {
         notificationController.configure()
-        notificationController.onOpen = { [weak self] in self?.actions.openDropdown() }
+        notificationController.onOpen = { [weak self] in self?.actions.showDropdown(.team) }
+        notificationController.onJoin = { [weak self] memberID in self?.actions.join(memberID) }
         teamStore.onStateChange = { [weak self] previous, current in
             guard let self else { return }
             if previous == nil {
@@ -95,12 +107,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 self.teamStore.start(session)
             }
             .store(in: &subscriptions)
-    }
-
-    private func showSettings() {
-        windowPresenter.show(Self.settingsWindow, title: "Digital Andon Settings") {
-            SettingsView(accountController: accountController, teamStore: teamStore, preferencesStore: preferencesStore, actions: actions, updater: updater)
-        }
     }
 
     /// Reuses the open onboarding window, so a join started from a link isn't interrupted.

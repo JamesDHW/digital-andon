@@ -10,6 +10,7 @@ final class StatusItemController: NSObject, NSPopoverDelegate {
     private let statusItem: NSStatusItem
     private let popover: NSPopover
     private let teamStore: TeamStore
+    private let navigation: DropdownNavigation
     private let avatarCache = AvatarImageCache()
     private var inputs = MenuBarInputs(state: nil, connection: .signedOut)
     private var model = MenuBarModel.make(state: nil, connection: .signedOut)
@@ -17,11 +18,14 @@ final class StatusItemController: NSObject, NSPopoverDelegate {
     private let powerSource: PowerSource
     private var breathingTimer: Timer?
     private var lastClosedAt = Date.distantPast
+    /// The app you were in when the popover opened, given focus back when it closes, so a shortcut never strands you.
+    private var previousApp: NSRunningApplication?
     private var subscriptions = Set<AnyCancellable>()
     private var appearanceObservation: NSKeyValueObservation?
 
-    init(teamStore: TeamStore, dropdown: DropdownView) {
+    init(teamStore: TeamStore, navigation: DropdownNavigation, dropdown: DropdownView) {
         self.teamStore = teamStore
+        self.navigation = navigation
         self.statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         self.popover = NSPopover()
         self.imageView = StatusImageView(frame: .zero)
@@ -32,8 +36,18 @@ final class StatusItemController: NSObject, NSPopoverDelegate {
         observeChanges()
     }
 
+    var isDropdownShown: Bool { popover.isShown }
+
+    /// Opens the popover on a page, or switches page if it's already open.
+    func show(_ page: DropdownPage) {
+        navigation.page = page
+        showDropdown()
+    }
+
     func showDropdown() {
         guard let button = statusItem.button, !popover.isShown else { return }
+        let frontmost = NSWorkspace.shared.frontmostApplication
+        previousApp = frontmost == NSRunningApplication.current ? nil : frontmost
         NSApp.activate()
         popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
         popover.contentViewController?.view.window?.makeKey()
@@ -47,12 +61,18 @@ final class StatusItemController: NSObject, NSPopoverDelegate {
         if popover.isShown { return closeDropdown() }
         let isReopeningFromTheSameClick = Date().timeIntervalSince(lastClosedAt) < AppConstants.popoverReopenGuardSeconds
         if isReopeningFromTheSameClick { return }
-        showDropdown()
+        show(.team)
     }
 
     /// A click on the icon closes the transient popover on mouse-down; this stops mouse-up reopening it.
+    /// Closed with Esc or ↩ (rather than by clicking another app), focus goes back to where you were.
     func popoverDidClose(_ notification: Notification) {
         lastClosedAt = Date()
+        navigation.page = .team
+        if NSApp.isActive {
+            previousApp?.activate()
+        }
+        previousApp = nil
     }
 
     private func configurePopover(with dropdown: DropdownView) {
@@ -143,8 +163,8 @@ final class StatusItemController: NSObject, NSPopoverDelegate {
 
     /// Whatever photos have arrived; asking also starts fetching any that haven't.
     private func currentPhotos() -> [MemberID: NSImage] {
-        let loaded = model.people.compactMap { person in
-            avatarCache.image(for: person.member.avatarUrl).map { (person.id, $0) }
+        let loaded = StatusImageRenderer.members(in: model).compactMap { member in
+            avatarCache.image(for: member.avatarUrl).map { (member.id, $0) }
         }
         return Dictionary(loaded, uniquingKeysWith: { first, _ in first })
     }

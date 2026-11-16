@@ -3,10 +3,11 @@ import { useState, type MouseEvent, type ReactElement } from "react";
 import type { MemberId } from "@backend/domain/memberId.js";
 import { CHART_FACE_SIZE } from "../domain/chart.constants.js";
 import { laneY, layoutChart, linePath, type ChartLayout } from "../domain/chartLayout.js";
-import { lightName } from "../domain/lightNames.js";
+import type { Companion } from "../domain/board.js";
+import { lightDescription, lightName } from "../domain/lightNames.js";
 import { lastWorkingSegment, type PersonTimeline } from "../domain/timeline.js";
 import type { TimeRange } from "../domain/timeRange.js";
-import { Avatar } from "./Avatar.js";
+import { AvatarGroup } from "./AvatarGroup.js";
 import { Hint } from "./Hint.js";
 import { Readout } from "./TimelineReadout.js";
 import { BAND_FILL, SIGNAL_COLOUR } from "./ui.constants.js";
@@ -15,10 +16,12 @@ type TimelineChartProps = {
   readonly timelines: readonly PersonTimeline[];
   readonly range: TimeRange;
   readonly width: number;
+  /** Who is with each person right now; only passed when the window runs up to now. */
+  readonly helpersOf: (memberId: MemberId) => readonly Companion[];
 };
 
-/** Blocked on top, Assist in the middle, Clear at the bottom. Each line runs back in time from the person's face. */
-export const TimelineChart = ({ timelines, range, width }: TimelineChartProps): ReactElement => {
+/** Blocked on top, Disrupted in the middle, Clear at the bottom. Each line runs back in time from the person's face. */
+export const TimelineChart = ({ timelines, range, width, helpersOf }: TimelineChartProps): ReactElement => {
   const [hoverTime, setHoverTime] = useState<number | null>(null);
   const [focusedId, setFocusedId] = useState<MemberId | null>(null);
   const layout = layoutChart(range, width);
@@ -57,7 +60,16 @@ export const TimelineChart = ({ timelines, range, width }: TimelineChartProps): 
         />
       </svg>
       {timelines.map((timeline, lane) => (
-        <Face key={timeline.member.id} timeline={timeline} layout={layout} lane={lane} laneCount={laneCount} isFocused={focusedId === timeline.member.id} onFocus={setFocusedId} />
+        <Face
+          key={timeline.member.id}
+          timeline={timeline}
+          layout={layout}
+          lane={lane}
+          laneCount={laneCount}
+          isFocused={focusedId === timeline.member.id}
+          onFocus={setFocusedId}
+          helpers={helpersOf(timeline.member.id)}
+        />
       ))}
       {hoverTime !== null && <Readout timelines={timelines} at={hoverTime} left={layout.x(hoverTime)} width={layout.width} />}
     </div>
@@ -75,6 +87,7 @@ const Backdrop = ({ layout }: BackdropProps): ReactElement => (
       <g key={band.colour}>
         <rect x={layout.plotLeft} y={band.top} width={layout.plotRight - layout.plotLeft} height={band.height} fill={BAND_FILL[band.colour]} />
         <text x={layout.plotLeft - 12} y={band.top + band.height / 2} textAnchor="end" dominantBaseline="middle" fontSize={12} fill="var(--ink-secondary)">
+          <title>{lightDescription(band.colour)}</title>
           {lightName(band.colour)}
         </text>
         <rect x={layout.plotLeft - 6} y={band.top + 6} width={3} height={band.height - 12} rx={1.5} style={{ fill: SIGNAL_COLOUR[band.colour] }} />
@@ -102,10 +115,12 @@ type FaceProps = {
   readonly laneCount: number;
   readonly isFocused: boolean;
   readonly onFocus: (memberId: MemberId | null) => void;
+  readonly helpers: readonly Companion[];
 };
 
-/** Their face at the end of their line, ringed in the colour they ended on. Hover to pick out their line. */
-const Face = ({ timeline, layout, lane, laneCount, isFocused, onFocus }: FaceProps): ReactElement | null => {
+/** Their face at the end of their line, ringed in the colour they ended on, with anyone who has joined them.
+ * Hover to pick out their line. */
+const Face = ({ timeline, layout, lane, laneCount, isFocused, onFocus, helpers }: FaceProps): ReactElement | null => {
   const last = lastWorkingSegment(timeline);
   if (last === null) return null;
   const handleEnter = (): void => onFocus(timeline.member.id);
@@ -120,7 +135,7 @@ const Face = ({ timeline, layout, lane, laneCount, isFocused, onFocus }: FacePro
         onMouseEnter={handleEnter}
         onMouseLeave={handleLeave}
       >
-        <Avatar member={timeline.member} colour={last.colour} size={CHART_FACE_SIZE} isBreathing={false} isFaded={false} />
+        <AvatarGroup member={timeline.member} colour={last.colour} size={CHART_FACE_SIZE} isBreathing={false} isFaded={false} helpers={helpers} />
       </span>
     </Hint>
   );

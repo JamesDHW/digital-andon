@@ -1,9 +1,9 @@
 import Foundation
 
 public enum CycleDirection: Sendable {
-    /// Clear → Assist → Blocked → Clear.
+    /// Clear → Disrupted → Blocked → Clear.
     case up
-    /// Blocked → Assist → Clear → Blocked.
+    /// Blocked → Disrupted → Clear → Blocked.
     case down
 }
 

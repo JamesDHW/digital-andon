@@ -32,6 +32,12 @@ final class LightSender {
         change { light in light.withStatus(status) }
     }
 
+    /// Puts your light back as it was (after unlocking the screen) and sends it straight away.
+    func restore(_ light: Light) {
+        change { current in current.pulled(light.colour, atMilliseconds: Self.nowInMilliseconds).withStatus(light.status ?? "") }
+        sendNow()
+    }
+
     /// Sends straight away, e.g. when the app quits mid-delay.
     func sendNow() {
         sendTask?.cancel()

@@ -11,12 +11,11 @@ struct ProfileEditor: View {
 
     var body: some View {
         HStack(alignment: .center, spacing: 16) {
-            AvatarView(member: member, colour: nil, diameter: 64)
+            AvatarView(member: member, colour: nil, diameter: 48)
             VStack(alignment: .leading, spacing: 6) {
                 HStack {
                     TextField("Name", text: $name)
                         .textFieldStyle(.roundedBorder)
-                        .font(.title3)
                         .onSubmit(saveName)
                     Button("Save", action: saveName)
                         .disabled(!hasUnsavedName)

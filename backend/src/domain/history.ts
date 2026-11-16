@@ -1,4 +1,4 @@
-import type { RecordedEvent } from "./andonEvent.js";
+import type { LightEvent, RecordedEvent } from "./andonEvent.js";
 import type { Colour } from "./colour.js";
 
 /** What a light was from a moment on. */
@@ -19,7 +19,7 @@ export const startingLight = (at: number, lastPull: RecordedEvent | null, lastSt
 
 /** Replays one member's events in order: each pull changes the colour and status; a status change keeps
  * the colour of the latest pull before it (found by binary search, so long histories stay fast). */
-export const replayChanges = (start: LightChange, events: readonly RecordedEvent[]): readonly LightChange[] => {
+export const replayChanges = (start: LightChange, events: readonly LightEvent[]): readonly LightChange[] => {
   const pullPositions = events.flatMap((event, position) => (event.kind === "pull" ? [position] : []));
   return events.map((event, position) => {
     const pull = events[lastPositionAtOrBefore(pullPositions, position, 0, pullPositions.length) ?? -1];

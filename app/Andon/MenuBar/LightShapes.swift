@@ -11,19 +11,20 @@ enum LightShapes {
         squircle(in: rect, inset: 0).fill()
     }
 
-    /// The ring carries the colour; inside it, their photo or initial. Anything already drawn to the left
+    /// The ring carries the colour; inside it, their photo or initial. Anything already drawn
     /// (in `covering`) is cut out, with a small transparent gap, so overlapping avatars read as a stack.
-    static func drawPerson(_ person: PersonIndicator, in rect: NSRect, covering: [NSRect], photo: NSImage?, rendering: LightRendering, alpha: CGFloat) {
-        let personAlpha = alpha * (person.isStale ? MenuBarLayout.staleAlpha : 1)
+    static func drawFace(_ face: MenuBarFace, covering: [NSRect], photo: NSImage?, rendering: LightRendering, alpha: CGFloat) {
+        let rect = face.rect
+        let personAlpha = alpha * (face.isStale ? MenuBarLayout.staleAlpha : 1)
         NSGraphicsContext.saveGraphicsState()
         for coveringRect in covering {
             let cutout = coveringRect.insetBy(dx: -MenuBarLayout.overlapCutout, dy: -MenuBarLayout.overlapCutout)
             outsideClip(of: NSBezierPath(ovalIn: cutout)).addClip()
         }
-        let ringAlpha = personAlpha * breathingAlpha(isBreathing: person.isBreathing, rendering: rendering)
-        drawRing(in: rect, colour: MenuBarPalette.fill(for: person.colour, rendering: rendering).withAlphaComponent(ringAlpha))
+        let ringAlpha = personAlpha * breathingAlpha(isBreathing: face.isBreathing, rendering: rendering)
+        drawRing(in: rect, colour: MenuBarPalette.fill(for: face.colour, rendering: rendering).withAlphaComponent(ringAlpha))
         let photoRect = rect.insetBy(dx: MenuBarLayout.photoInset, dy: MenuBarLayout.photoInset)
-        drawFace(of: person.member, photo: photo, in: photoRect, alpha: personAlpha)
+        drawPhoto(of: face.member, photo: photo, in: photoRect, alpha: personAlpha)
         NSGraphicsContext.restoreGraphicsState()
     }
 
@@ -54,7 +55,7 @@ enum LightShapes {
         ring.stroke()
     }
 
-    private static func drawFace(of member: Member, photo: NSImage?, in rect: NSRect, alpha: CGFloat) {
+    private static func drawPhoto(of member: Member, photo: NSImage?, in rect: NSRect, alpha: CGFloat) {
         NSGraphicsContext.saveGraphicsState()
         NSBezierPath(ovalIn: rect).addClip()
         if let photo {

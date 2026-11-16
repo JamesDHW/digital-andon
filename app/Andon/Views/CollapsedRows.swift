@@ -7,6 +7,7 @@ struct FoldedSection: View {
     /// Nil draws grey marks, for people who are off or offline.
     let colour: Colour?
     let rows: [DropdownRow]
+    let state: TeamState
     let now: Date
     let actions: AndonActions
     @Binding var isExpanded: Bool
@@ -21,7 +22,7 @@ struct FoldedSection: View {
                 Text("\(rows.count)").font(.system(size: 12)).foregroundStyle(.secondary)
             } content: {
                 ForEach(rows) { row in
-                    MemberRowView(row: row, now: now, actions: actions)
+                    MemberRowView(row: row, state: state, now: now, actions: actions)
                 }
             }
         }
@@ -40,6 +41,7 @@ struct FoldedSection: View {
 
 struct EveryoneElseRow: View {
     let rows: [DropdownRow]
+    let state: TeamState
     let now: Date
     let actions: AndonActions
     @Binding var isExpanded: Bool
@@ -51,7 +53,7 @@ struct EveryoneElseRow: View {
                 Text("\(rows.count) you don't follow").font(.system(size: 12)).foregroundStyle(.secondary)
             } content: {
                 ForEach(rows) { row in
-                    MemberRowView(row: row, now: now, actions: actions)
+                    MemberRowView(row: row, state: state, now: now, actions: actions)
                 }
             }
         }

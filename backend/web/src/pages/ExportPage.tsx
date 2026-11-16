@@ -14,7 +14,7 @@ type ExportPageProps = {
   readonly onSignedOut: () => void;
 };
 
-/** Every change of light and status as a CSV, narrowed to the people and window you choose. */
+/** Every change of light and context, and every join, as a CSV, narrowed to the people and window you choose. */
 export const ExportPage = ({ token, snapshot, onSignedOut }: ExportPageProps): ReactElement => {
   const everyone = snapshot.members.map((member) => member.id);
   const [people, setPeople] = useState<readonly MemberId[]>(everyone);
@@ -35,7 +35,7 @@ export const ExportPage = ({ token, snapshot, onSignedOut }: ExportPageProps): R
   return (
     <div className="max-w-2xl p-8">
       <h1 className="text-2xl font-semibold tracking-tight">Export</h1>
-      <p className="mt-2 text-sm text-ink-secondary">Every change of light and status, one row each, with who and when. Up to 5,000 rows per file.</p>
+      <p className="mt-2 text-sm text-ink-secondary">Every change of light and context, and every time someone joined or left someone, one row each, with who and when. Up to 5,000 rows per file.</p>
       <div className="mt-6 space-y-4 rounded-lg border border-border bg-surface-raised p-5">
         <Field label="People">
           <PeoplePicker members={snapshot.members} selected={people} follows={snapshot.follows} onChange={setPeople} />

@@ -8,6 +8,7 @@ enum HotkeyController {
         KeyboardShortcuts.onKeyDown(for: .cycleUp) { [weak actions] in actions?.cycle(.up) }
         KeyboardShortcuts.onKeyDown(for: .cycleDown) { [weak actions] in actions?.cycle(.down) }
         KeyboardShortcuts.onKeyUp(for: .toggleOff) { [weak actions] in actions?.toggleOff() }
-        KeyboardShortcuts.onKeyUp(for: .editStatus) { [weak actions] in actions?.editStatus() }
+        KeyboardShortcuts.onKeyUp(for: .editStatus) { [weak actions] in actions?.editContext() }
+        KeyboardShortcuts.onKeyUp(for: .joinSomeone) { [weak actions] in actions?.joinSomeone() }
     }
 }

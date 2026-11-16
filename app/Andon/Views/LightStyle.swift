@@ -6,6 +6,8 @@ enum LightStyle {
     static func colour(_ colour: Colour) -> Color { Color(nsColor: MenuBarPalette.adaptive(colour)) }
 
     static func name(_ colour: Colour) -> String { LightNames.name(colour) }
+
+    static func description(_ colour: Colour) -> String { LightNames.description(colour) }
 }
 
 /// A small solid light.

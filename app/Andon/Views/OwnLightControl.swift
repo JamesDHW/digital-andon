@@ -1,17 +1,18 @@
 import AndonKit
 import SwiftUI
 
-/// Your own light: Clear, Assist and Blocked, an Off switch, then your status. Changes show at once.
+/// Your own status: Clear, Disrupted and Blocked, an Off switch, who you're with, then your context. Changes show at once.
 struct OwnLightControl: View {
-    let model: DropdownModel
+    let state: TeamState?
     let actions: AndonActions
 
-    private var colour: Colour { model.yourLight?.colour ?? .green }
-    private var status: String? { model.yourLight?.status }
+    private var yourLight: Light? { state.flatMap { $0.light(for: $0.you) } }
+    private var colour: Colour { yourLight?.colour ?? .green }
+    private var context: String? { yourLight?.status }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            SectionTitle(text: "Your light")
+            SectionTitle(text: "Your status")
             HStack(spacing: 6) {
                 ForEach(Colour.levels, id: \.self) { option in
                     colourButton(option)
@@ -26,20 +27,44 @@ struct OwnLightControl: View {
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
-            statusRow
+            joinRow
+            contextRow
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
     }
 
-    private var statusRow: some View {
-        HStack(alignment: .firstTextBaseline) {
-            Text(status ?? "No status")
+    /// Who you've joined, or who has joined you.
+    @ViewBuilder
+    private var joinRow: some View {
+        if let state, let helpingID = state.youAreHelping, let person = state.members[helpingID] {
+            HStack {
+                Label("With \(person.name)", systemImage: "person.2.fill").font(.callout)
+                Spacer()
+                Button("Leave", action: actions.leave)
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
+                    .help("Your light goes back to what it was before you joined")
+            }
+        }
+        if let state, !state.helpers(of: state.you).isEmpty {
+            let names = state.helpers(of: state.you).map(\.name)
+            Label("\(ListFormatter.localizedString(byJoining: names)) \(names.count == 1 ? "is" : "are") with you", systemImage: "person.2.fill")
                 .font(.callout)
-                .foregroundStyle(status == nil ? Color.secondary : Color.primary)
+                .foregroundStyle(.secondary)
+        }
+    }
+
+    private var contextRow: some View {
+        HStack(alignment: .center) {
+            Text(context ?? "No context")
+                .font(.callout)
+                .foregroundStyle(context == nil ? Color.secondary : Color.primary)
                 .lineLimit(2)
             Spacer()
-            Button(status == nil ? "Set status…" : "Change…", action: actions.editStatus).buttonStyle(.borderless)
+            Button(context == nil ? "Set context…" : "Change…", action: actions.editContextFromDropdown)
+                .buttonStyle(.bordered)
+                .controlSize(.small)
         }
     }
 
@@ -72,6 +97,6 @@ struct OwnLightControl: View {
         .buttonStyle(.plain)
         .accessibilityLabel(Text(LightStyle.name(option)))
         .accessibilityAddTraits(isSelected ? .isSelected : [])
-        .help(LightStyle.name(option))
+        .help(LightStyle.description(option))
     }
 }

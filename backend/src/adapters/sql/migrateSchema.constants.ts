@@ -12,4 +12,5 @@ export const SCHEMA_STATEMENTS = [
   "UPDATE members SET avatar_url = NULL WHERE avatar_url NOT LIKE 'https://%.googleusercontent.com/%'",
   "CREATE TABLE IF NOT EXISTS presence_checks (member_id TEXT PRIMARY KEY, due_at INTEGER NOT NULL)",
   "CREATE TABLE IF NOT EXISTS sign_in_attempts (state_hash TEXT PRIMARY KEY, code_verifier TEXT NOT NULL, client TEXT NOT NULL, device_name TEXT NOT NULL, expires_at INTEGER NOT NULL)",
+  "CREATE TABLE IF NOT EXISTS helps (helper_id TEXT PRIMARY KEY, target_id TEXT NOT NULL, return_colour TEXT NOT NULL, return_status TEXT, joined_at INTEGER NOT NULL)",
 ] as const;

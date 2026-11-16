@@ -10,12 +10,12 @@ extension Light {
         if newColour == colour {
             return self
         }
-        return Light(memberId: memberId, colour: newColour, status: newColour == .green ? nil : status, since: now)
+        return Light(memberId: memberId, colour: newColour, status: newColour == .green ? nil : status, since: now, helping: newColour.endsJoin ? nil : helping)
     }
 
     /// A status can be set on any colour; blank clears it.
     public func withStatus(_ rawStatus: String) -> Light {
-        Light(memberId: memberId, colour: colour, status: Self.normalisedStatus(rawStatus), since: since)
+        Light(memberId: memberId, colour: colour, status: Self.normalisedStatus(rawStatus), since: since, helping: helping)
     }
 
     /// One short line, as the server stores it: whitespace collapsed, capped in length, blank meaning none.

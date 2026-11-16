@@ -14,4 +14,7 @@ public enum Colour: String, Codable, CaseIterable, Sendable {
     public var isRaised: Bool { self == .amber || self == .red }
 
     public var isWorking: Bool { self != .off }
+
+    /// Going Clear or Off ends a join, from either side.
+    public var endsJoin: Bool { self == .green || self == .off }
 }

@@ -16,11 +16,15 @@ export const greetMember = (dependencies: TeamDependencies, memberId: MemberId):
   const follows = dependencies.follows.listFollowing(memberId);
   if (follows instanceof Error) return follows;
 
+  const helps = dependencies.helps.list();
+  if (helps instanceof Error) return helps;
+  const helping = new Map(helps.map((help) => [help.helperId, help.targetId]));
+
   return {
     type: "hello",
     you: memberId,
     members,
-    lights: lights.map(toWireLight),
+    lights: lights.map((light) => toWireLight(light, helping.get(light.memberId) ?? null)),
     follows,
     online: dependencies.onlineMembers(),
     serverTime: dependencies.now(),

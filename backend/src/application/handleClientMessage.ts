@@ -3,6 +3,7 @@ import type { MemberId } from "../domain/memberId.js";
 import type { ClientMessage } from "../protocol/clientMessage.js";
 import type { Delivery } from "../protocol/serverMessage.js";
 import { followMember, unfollowMember } from "./followCommands.js";
+import { joinMember, leaveMember } from "./joins/joinCommands.js";
 import { pullLight, setLightStatus } from "./lightCommands.js";
 import type { TeamDependencies } from "./teamDependencies.js";
 
@@ -20,6 +21,10 @@ export const handleClientMessage = (
       return followMember(dependencies, senderId, message.memberId);
     case "unfollow":
       return unfollowMember(dependencies, senderId, message.memberId);
+    case "join":
+      return joinMember(dependencies, senderId, message.memberId);
+    case "leave":
+      return leaveMember(dependencies, senderId);
     default:
       return message satisfies never;
   }

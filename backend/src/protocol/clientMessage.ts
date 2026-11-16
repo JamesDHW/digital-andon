@@ -10,6 +10,8 @@ const clientMessageSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("status"), status: z.string().max(STATUS_MAX_LENGTH * 2) }),
   z.object({ type: z.literal("follow"), memberId: memberIdSchema }),
   z.object({ type: z.literal("unfollow"), memberId: memberIdSchema }),
+  z.object({ type: z.literal("join"), memberId: memberIdSchema }),
+  z.object({ type: z.literal("leave") }),
 ]);
 
 export type ClientMessage = z.infer<typeof clientMessageSchema>;

@@ -11,7 +11,8 @@ const memberSchema = z.object({
   joinedAt: z.number(),
 });
 
-const lightSchema = z.object({ memberId: memberIdSchema, colour: colourSchema, status: z.string().nullable(), since: z.number() });
+/** Older servers don't send who someone is with; that reads as nobody. */
+const lightSchema = z.object({ memberId: memberIdSchema, colour: colourSchema, status: z.string().nullable(), since: z.number(), helping: memberIdSchema.nullable().default(null) });
 
 const lightChangeSchema = z.object({ at: z.number(), colour: colourSchema, status: z.string().nullable() });
 

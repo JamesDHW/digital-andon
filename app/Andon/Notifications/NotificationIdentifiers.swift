@@ -2,7 +2,9 @@ import AndonKit
 
 /// Plain constants, readable from the notification delegate's nonisolated callbacks.
 enum NotificationIdentifiers {
-    static let redCategory = "andon.red"
+    /// Disrupted or Blocked: the banner has a Join button.
+    static let raisedCategory = "andon.raised"
+    static let joinAction = "andon.join"
     static let changeCategory = "andon.change"
     static let memberKey = "memberId"
 

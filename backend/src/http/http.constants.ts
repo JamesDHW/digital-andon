@@ -2,7 +2,7 @@ export const EVENT_PAGE_DEFAULT_LIMIT = 500;
 export const EVENT_PAGE_MAX_LIMIT = 5000;
 export const DEVICE_NAME_MAX_LENGTH = 80;
 export const MEMBER_PATH_PATTERN = /^\/team\/members\/([^/]+)$/;
-export const CSV_HEADER = "id,at,kind,memberId,name,colour,status,source";
+export const CSV_HEADER = "id,at,kind,memberId,name,colour,context,source,withMemberId,withName";
 export const NO_CONTENT_STATUS = 204;
 export const FOUND_STATUS = 302;
 /** The Mac app's sign-in window waits for a redirect to this address. */

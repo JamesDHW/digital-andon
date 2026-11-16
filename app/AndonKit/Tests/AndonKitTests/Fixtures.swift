@@ -31,8 +31,8 @@ enum Fixtures {
         Member(id: MemberID(rawValue: name.lowercased()), name: name, email: "\(name.lowercased())@example.com", avatarUrl: nil, role: .member, joinedAt: joinedAt)
     }
 
-    static func light(_ name: String, _ colour: Colour, since: Double, status: String? = nil) -> Light {
-        Light(memberId: MemberID(rawValue: name.lowercased()), colour: colour, status: status, since: since)
+    static func light(_ name: String, _ colour: Colour, since: Double, status: String? = nil, helping: String? = nil) -> Light {
+        Light(memberId: MemberID(rawValue: name.lowercased()), colour: colour, status: status, since: since, helping: helping.map { MemberID(rawValue: $0.lowercased()) })
     }
 
     /// A team where "lead" follows every other member, all online.

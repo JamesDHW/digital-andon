@@ -24,7 +24,7 @@ describe("pulling the cord", () => {
         audience: { kind: "everyone" },
         message: {
           type: "light",
-          light: { memberId: priya.id, colour: "red", status: "Deploy blocked", since: team.clock.now() },
+          light: { memberId: priya.id, colour: "red", status: "Deploy blocked", since: team.clock.now(), helping: null },
         },
       },
     ]);

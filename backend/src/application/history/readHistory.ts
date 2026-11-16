@@ -1,5 +1,5 @@
 import { AndonError, InvalidRequestError } from "../../errors/andonError.js";
-import type { RecordedEvent } from "../../domain/andonEvent.js";
+import { isLightEvent, type LightEvent } from "../../domain/andonEvent.js";
 import { replayChanges, startingLight, type LightChange } from "../../domain/history.js";
 import type { MemberId } from "../../domain/memberId.js";
 import type { TeamDependencies } from "../teamDependencies.js";
@@ -35,7 +35,8 @@ export const readHistory = (dependencies: TeamDependencies, query: HistoryQuery)
   const events = dependencies.events.list({ afterId: 0, limit: HISTORY_EVENT_LIMIT, from: query.from, to: query.to, memberIds: query.memberIds });
   if (events instanceof Error) return events;
 
-  const histories = query.memberIds.map((memberId) => readMemberHistory(dependencies, query.from, memberId, events));
+  const lightEvents = events.filter(isLightEvent);
+  const histories = query.memberIds.map((memberId) => readMemberHistory(dependencies, query.from, memberId, lightEvents));
   const failure = histories.find((history): history is AndonError => history instanceof AndonError);
   if (failure !== undefined) return failure;
 
@@ -43,7 +44,7 @@ export const readHistory = (dependencies: TeamDependencies, query: HistoryQuery)
   return { from: query.from, to: query.to, members, isTruncated: events.length >= HISTORY_EVENT_LIMIT };
 };
 
-const readMemberHistory = (dependencies: TeamDependencies, from: number, memberId: MemberId, events: readonly RecordedEvent[]): MemberHistory | AndonError => {
+const readMemberHistory = (dependencies: TeamDependencies, from: number, memberId: MemberId, events: readonly LightEvent[]): MemberHistory | AndonError => {
   const lastPull = dependencies.events.findLatestBefore(memberId, from, "pull");
   if (lastPull instanceof Error) return lastPull;
   const lastStatus = dependencies.events.findLatestBefore(memberId, from, "status");

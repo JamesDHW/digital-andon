@@ -6,6 +6,7 @@ import { createResendMailer } from "../adapters/resendMailer.js";
 import { createSqlCredentialStore } from "../adapters/sql/sqlCredentialStore.js";
 import { createSqlEventStore } from "../adapters/sql/sqlEventStore.js";
 import { createSqlFollowStore } from "../adapters/sql/sqlFollowStore.js";
+import { createSqlHelpStore } from "../adapters/sql/sqlHelpStore.js";
 import { createSqlLightStore } from "../adapters/sql/sqlLightStore.js";
 import { createSqlMemberStore } from "../adapters/sql/sqlMemberStore.js";
 import { createSqlPresenceCheckStore } from "../adapters/sql/sqlPresenceCheckStore.js";
@@ -26,6 +27,7 @@ export const createTeamDependencies = (runtime: TeamRuntime): AuthDependencies =
   members: createSqlMemberStore(runtime.sql),
   lights: createSqlLightStore(runtime.sql),
   follows: createSqlFollowStore(runtime.sql),
+  helps: createSqlHelpStore(runtime.sql),
   events: createSqlEventStore(runtime.sql),
   presenceChecks: createSqlPresenceCheckStore(runtime.sql),
   credentials: createSqlCredentialStore(runtime.sql),

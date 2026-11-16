@@ -5,7 +5,7 @@ import { useElementWidth } from "../hooks/useElementWidth.js";
 import { useHistory } from "../hooks/useHistory.js";
 import { useNow } from "../hooks/useNow.js";
 import type { Route } from "../hooks/useRoute.js";
-import { memberById, type TeamSnapshot } from "../domain/board.js";
+import { helpersOf, memberById, type Companion, type TeamSnapshot } from "../domain/board.js";
 import { blockStats } from "../domain/stats.js";
 import { buildTimeline, type PersonTimeline } from "../domain/timeline.js";
 import { resolveWindow, windowFromQuery, windowToQuery, type TimeWindow } from "../domain/timeRange.js";
@@ -30,7 +30,7 @@ export const TimelinePage = ({ token, route, snapshot, onSignedOut }: TimelinePa
   const people = selectedPeople(route.query, snapshot);
   const lightsKey = snapshot.lights
     .filter((light) => people.includes(light.memberId))
-    .map((light) => `${light.memberId}:${light.colour}:${light.since}:${light.status ?? ""}`)
+    .map((light) => `${light.memberId}:${light.colour}:${light.since}:${light.status ?? ""}:${light.helping ?? ""}`)
     .join("|");
   const { history, isLoading, problem } = useHistory(token, range, people, lightsKey, onSignedOut);
   const { ref, width } = useElementWidth<HTMLDivElement>();
@@ -43,6 +43,8 @@ export const TimelinePage = ({ token, route, snapshot, onSignedOut }: TimelinePa
   const handlePeople = (changed: readonly MemberId[]): void => update(changed, window);
   const handleWindow = (changed: TimeWindow): void => update(people, changed);
   const canDraw = width > 0 && people.length > 0;
+  const isUpToNow = range.to >= now;
+  const currentHelpers = (memberId: MemberId): readonly Companion[] => (isUpToNow ? helpersOf(snapshot, memberId) : []);
   return (
     <div className="p-8">
       <header className="mb-6 flex flex-wrap items-center justify-between gap-3">
@@ -58,7 +60,7 @@ export const TimelinePage = ({ token, route, snapshot, onSignedOut }: TimelinePa
       <div ref={ref} className="rounded-lg border border-border bg-surface-raised p-4">
         {problem !== null && <p className="text-sm text-ink-secondary">{problem}</p>}
         {people.length === 0 && <p className="py-16 text-center text-sm text-ink-muted">Pick people to see their lights over time.</p>}
-        {canDraw && <TimelineChart timelines={timelines} range={range} width={width - 32} />}
+        {canDraw && <TimelineChart timelines={timelines} range={range} width={width - 32} helpersOf={currentHelpers} />}
         {history?.isTruncated === true && <p className="mt-2 text-xs text-ink-muted">This window has more changes than can be shown. Choose a shorter one to see them all.</p>}
         {isLoading && <p className="mt-2 text-xs text-ink-muted">Loading…</p>}
       </div>

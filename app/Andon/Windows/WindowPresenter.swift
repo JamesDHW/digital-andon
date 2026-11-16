@@ -1,7 +1,7 @@
 import AppKit
 import SwiftUI
 
-/// Opens (or brings back) the Settings and onboarding windows. A menu bar app has no Dock icon, so it activates itself first.
+/// Opens (or brings back) the onboarding window. A menu bar app has no Dock icon, so it activates itself first.
 @MainActor
 final class WindowPresenter {
     private var windows: [String: NSWindow] = [:]
