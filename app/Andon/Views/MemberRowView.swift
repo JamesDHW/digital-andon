@@ -2,7 +2,7 @@ import AndonKit
 import SwiftUI
 
 /// One person. Someone blocked gets a tinted card, so it's the first thing you see; go and help them.
-/// Anyone Disrupted or Blocked has a Join button, which becomes Leave once you're with them.
+/// Anyone working has a Join button (prominent for Disrupted and Blocked), which becomes Leave once you're with them.
 struct MemberRowView: View {
     let row: DropdownRow
     let state: TeamState
@@ -13,8 +13,8 @@ struct MemberRowView: View {
     private var light: Light { row.rankedMember.light }
     private var isBlocked: Bool { light.colour == .red }
     private var isWithYou: Bool { state.youAreHelping == member.id }
-    /// You can't join yourself, or someone who has joined you.
-    private var canJoin: Bool { light.colour.isRaised && member.id != state.you && light.helping != state.you }
+    /// You can't join yourself, someone Off, or someone who has joined you.
+    private var canJoin: Bool { light.colour.isWorking && member.id != state.you && light.helping != state.you }
 
     var body: some View {
         HStack(alignment: .center, spacing: 12) {
@@ -57,12 +57,18 @@ struct MemberRowView: View {
                 .controlSize(.small)
                 .help("Stop working with \(member.name); your light goes back to what it was")
         }
-        if !isWithYou {
+        if !isWithYou && light.colour.isRaised {
             Button("Join") { actions.join(member.id) }
                 .buttonStyle(.borderedProminent)
                 .tint(LightStyle.colour(.amber))
                 .controlSize(.small)
                 .help("Work with \(member.name): you go Disrupted until either of you goes Clear")
+        }
+        if !isWithYou && !light.colour.isRaised {
+            Button("Join") { actions.join(member.id) }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+                .help("Log time with \(member.name): you go Disrupted until either of you goes Clear")
         }
     }
 

@@ -44,8 +44,9 @@ describe("team history", () => {
           { at: minutesIn(20), colour: "red", status: "Waiting on infra" },
           { at: minutesIn(30), colour: "amber", status: "Waiting on infra" },
         ],
+        joins: [],
       },
-      { memberId: tom.id, start: { at: minutesIn(18), colour: "off", status: null }, changes: [] },
+      { memberId: tom.id, start: { at: minutesIn(18), colour: "off", status: null }, changes: [], joins: [] },
     ]);
     expect(history.isTruncated).toBe(false);
   });

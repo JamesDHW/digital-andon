@@ -10,6 +10,7 @@ import { HintProvider } from "../ui/Hint.js";
 import { ExportPage } from "./ExportPage.js";
 import { SettingsPage } from "./SettingsPage.js";
 import { SignInPage } from "./SignInPage.js";
+import { SwitchingPage } from "./SwitchingPage.js";
 import { TeamPage } from "./TeamPage.js";
 import { TimelinePage } from "./TimelinePage.js";
 
@@ -66,6 +67,8 @@ const Page = ({ token, route, snapshot, now, isAdmin, onSignOut }: PageProps): R
       return <TeamPage snapshot={snapshot} now={now} navigate={route.navigate} />;
     case "/timeline":
       return <TimelinePage token={token} route={route} snapshot={snapshot} onSignedOut={onSignOut} />;
+    case "/switching":
+      return <SwitchingPage token={token} route={route} snapshot={snapshot} onSignedOut={onSignOut} />;
     case "/export":
       if (!isAdmin) return <AdminsOnly />;
       return <ExportPage token={token} snapshot={snapshot} onSignedOut={onSignOut} />;

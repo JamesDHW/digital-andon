@@ -22,3 +22,6 @@ export const FADED_OPACITY = 0.45;
 /** A helper's face is this much of the person's, and this much of it shows past the one in front. */
 export const HELPER_SCALE = 0.78;
 export const HELPER_OVERLAP = 0.5;
+
+/** A helper's face on someone's timeline line, where they joined or left. */
+export const JOIN_MARK_SIZE = 18;

@@ -1,5 +1,6 @@
 import { useState, type MouseEvent, type ReactElement } from "react";
 
+import type { Member } from "@backend/domain/member.js";
 import type { MemberId } from "@backend/domain/memberId.js";
 import { CHART_FACE_SIZE } from "../domain/chart.constants.js";
 import { laneY, layoutChart, linePath, type ChartLayout } from "../domain/chartLayout.js";
@@ -9,6 +10,7 @@ import { lastWorkingSegment, type PersonTimeline } from "../domain/timeline.js";
 import type { TimeRange } from "../domain/timeRange.js";
 import { AvatarGroup } from "./AvatarGroup.js";
 import { Hint } from "./Hint.js";
+import { JoinMarks } from "./JoinMarks.js";
 import { Readout } from "./TimelineReadout.js";
 import { BAND_FILL, SIGNAL_COLOUR } from "./ui.constants.js";
 
@@ -18,10 +20,12 @@ type TimelineChartProps = {
   readonly width: number;
   /** Who is with each person right now; only passed when the window runs up to now. */
   readonly helpersOf: (memberId: MemberId) => readonly Companion[];
+  readonly memberOf: (memberId: MemberId) => Member | null;
 };
 
-/** Blocked on top, Disrupted in the middle, Clear at the bottom. Each line runs back in time from the person's face. */
-export const TimelineChart = ({ timelines, range, width, helpersOf }: TimelineChartProps): ReactElement => {
+/** Blocked on top, Disrupted in the middle, Clear at the bottom. Each line runs back in time from the person's face.
+ * Time Blocked with nobody there is drawn darker and thicker, and helpers' faces mark where they joined and left. */
+export const TimelineChart = ({ timelines, range, width, helpersOf, memberOf }: TimelineChartProps): ReactElement => {
   const [hoverTime, setHoverTime] = useState<number | null>(null);
   const [focusedId, setFocusedId] = useState<MemberId | null>(null);
   const layout = layoutChart(range, width);
@@ -45,6 +49,19 @@ export const TimelineChart = ({ timelines, range, width, helpersOf }: TimelineCh
             strokeLinejoin="round"
             opacity={isDimmed(focusedId, timeline.member.id) ? 0.2 : 1}
           />
+        ))}
+        {timelines.map((timeline, lane) => (
+          <path
+            key={`${timeline.member.id}-alone`}
+            d={timeline.blockedAlone.map((span) => `M${String(layout.x(span.from))},${String(laneY(layout, "red", lane, laneCount))}H${String(layout.x(span.to))}`).join("")}
+            fill="none"
+            stroke="var(--wait-red)"
+            strokeWidth={4}
+            strokeLinecap="round"
+            opacity={isDimmed(focusedId, timeline.member.id) ? 0.2 : 1}
+          >
+            <title>Blocked with nobody there</title>
+          </path>
         ))}
         {hoverTime !== null && (
           <line x1={layout.x(hoverTime)} x2={layout.x(hoverTime)} y1={layout.plotTop} y2={layout.plotBottom} stroke="var(--ink-muted)" strokeDasharray="3 3" />
@@ -71,7 +88,10 @@ export const TimelineChart = ({ timelines, range, width, helpersOf }: TimelineCh
           helpers={helpersOf(timeline.member.id)}
         />
       ))}
-      {hoverTime !== null && <Readout timelines={timelines} at={hoverTime} left={layout.x(hoverTime)} width={layout.width} />}
+      {timelines.map((timeline, lane) => (
+        <JoinMarks key={`${timeline.member.id}-marks`} timeline={timeline} layout={layout} lane={lane} laneCount={laneCount} memberOf={memberOf} />
+      ))}
+      {hoverTime !== null && <Readout timelines={timelines} at={hoverTime} left={layout.x(hoverTime)} width={layout.width} memberOf={memberOf} />}
     </div>
   );
 };

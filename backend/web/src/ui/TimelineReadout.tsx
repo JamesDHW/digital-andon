@@ -1,5 +1,7 @@
 import type { ReactElement } from "react";
 
+import type { Member } from "@backend/domain/member.js";
+import type { MemberId } from "@backend/domain/memberId.js";
 import { formatMoment } from "../domain/format.js";
 import { lightName } from "../domain/lightNames.js";
 import { segmentAt, type PersonTimeline } from "../domain/timeline.js";
@@ -10,10 +12,11 @@ type ReadoutProps = {
   readonly at: number;
   readonly left: number;
   readonly width: number;
+  readonly memberOf: (memberId: MemberId) => Member | null;
 };
 
 /** Where everyone was at the moment under the pointer. */
-export const Readout = ({ timelines, at, left, width }: ReadoutProps): ReactElement => {
+export const Readout = ({ timelines, at, left, width, memberOf }: ReadoutProps): ReactElement => {
   const isRightHalf = left > width / 2;
   return (
     <div
@@ -31,6 +34,7 @@ export const Readout = ({ timelines, at, left, width }: ReadoutProps): ReactElem
                 <span className="font-medium">{timeline.member.name}</span>
                 <span className="text-ink-secondary"> · {segment === null ? "not here yet" : lightName(segment.colour)}</span>
                 <Status text={segment?.status ?? null} />
+                <Status text={withWhom(timeline, at, memberOf)} />
               </span>
             </li>
           );
@@ -47,4 +51,14 @@ type StatusProps = {
 const Status = ({ text }: StatusProps): ReactElement | null => {
   if (text === null) return null;
   return <span className="block truncate text-xs text-ink-muted">{text}</span>;
+};
+
+/** Who was with them at that moment, if anyone. */
+const withWhom = (timeline: PersonTimeline, at: number, memberOf: (memberId: MemberId) => Member | null): string | null => {
+  const names = timeline.helpedBy
+    .filter((span) => span.from <= at && at < span.to)
+    .flatMap((span) => [memberOf(span.helperId)?.name ?? ""])
+    .filter((name) => name.length > 0);
+  if (names.length === 0) return null;
+  return `Joined by ${names.join(", ")}`;
 };

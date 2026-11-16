@@ -14,7 +14,12 @@ export type AndonEvent =
 
 export type RecordedEvent = AndonEvent & { readonly id: number };
 
+/** Someone joining or leaving someone. */
+export type JoinEvent = Extract<RecordedEvent, { readonly kind: "join" | "leave" }>;
+
 /** The events that change a light, as opposed to who is with whom. */
 export type LightEvent = Extract<RecordedEvent, { readonly kind: "pull" | "status" }>;
 
 export const isLightEvent = (event: RecordedEvent): event is LightEvent => event.kind === "pull" || event.kind === "status";
+
+export const isJoinEvent = (event: RecordedEvent): event is JoinEvent => event.kind === "join" || event.kind === "leave";

@@ -1,8 +1,8 @@
 import AndonKit
 import SwiftUI
 
-/// ⌃⌥J with more than one person to choose from: everyone Disrupted or Blocked, most urgent first and already
-/// selected. ↑↓ to choose, ↩ to join (or leave, if you're already with them), or click.
+/// ⌃⌥J unless exactly one person is Disrupted or Blocked: everyone working, most urgent first and already selected.
+/// ↑↓ to choose, ↩ to join (or leave, if you're already with them), or click.
 struct JoinPickerView: View {
     let state: TeamState
     let now: Date
@@ -35,14 +35,26 @@ struct JoinPickerView: View {
             }
             .padding(.horizontal, 8)
             if candidates.isEmpty {
-                Text("Nobody is Disrupted or Blocked right now.")
+                Text("Nobody else is working right now.")
                     .font(.callout)
                     .foregroundStyle(.secondary)
                     .padding(8)
             }
-            ForEach(Array(candidates.enumerated()), id: \.element.id) { index, candidate in
-                row(candidate, isSelected: index == clampedSelection)
-                    .onTapGesture { onChoose(candidate.id) }
+            ScrollViewReader { scroller in
+                ScrollView {
+                    VStack(spacing: 2) {
+                        ForEach(Array(candidates.enumerated()), id: \.element.id) { index, candidate in
+                            row(candidate, isSelected: index == clampedSelection)
+                                .id(candidate.id)
+                                .onTapGesture { onChoose(candidate.id) }
+                        }
+                    }
+                }
+                .frame(maxHeight: AppConstants.joinPickerMaxHeight)
+                .onChange(of: clampedSelection) { _, index in
+                    guard candidates.indices.contains(index) else { return }
+                    scroller.scrollTo(candidates[index].id)
+                }
             }
         }
         .padding(.horizontal, 8)

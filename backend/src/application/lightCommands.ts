@@ -11,9 +11,11 @@ import type { TeamDependencies } from "./teamDependencies.js";
 
 export type { PullCommand } from "./changeLight.js";
 
-/** A person (or the offline sweep) changing a light. Going Clear or Off also ends any join, from either side. */
+/** A person (or the offline sweep) changing a light. Changing to Clear or Off also ends any join, from either side. */
 export const pullLight = (dependencies: TeamDependencies, command: PullCommand): readonly Delivery[] | AndonError => {
-  if (!endsJoin(command.colour)) return changeLight(dependencies, command);
+  const light = currentLight(dependencies, command.memberId);
+  if (light instanceof Error) return light;
+  if (!endsJoin(light.colour, command.colour)) return changeLight(dependencies, command);
 
   const ended = endJoinsOf(dependencies, command.memberId);
   if (ended instanceof Error) return ended;

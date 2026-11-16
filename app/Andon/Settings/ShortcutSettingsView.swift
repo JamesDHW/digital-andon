@@ -10,6 +10,10 @@ struct ShortcutSettingsView: View {
         SettingsRow(label: "Switch off and back on") { KeyboardShortcuts.Recorder(for: .toggleOff) }
         SettingsRow(label: "Set your context") { KeyboardShortcuts.Recorder(for: .editStatus) }
         SettingsRow(label: "Join someone") { KeyboardShortcuts.Recorder(for: .joinSomeone) }
+        Text("With one person Disrupted or Blocked, it joins them; otherwise you choose from everyone working.")
+            .font(.caption)
+            .foregroundStyle(.secondary)
+            .fixedSize(horizontal: false, vertical: true)
         Text("Locking your screen switches you off; unlocking puts your light back as it was.")
             .font(.caption)
             .foregroundStyle(.secondary)

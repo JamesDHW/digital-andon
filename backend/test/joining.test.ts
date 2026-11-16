@@ -7,6 +7,7 @@ import { switchOffAbsentMembers, noteDisconnected } from "../src/application/pre
 import { OFFLINE_GRACE_MS } from "../src/application/presence/presence.constants.js";
 import type { ClientMessage } from "../src/protocol/clientMessage.js";
 import type { MemberId } from "../src/domain/memberId.js";
+import { readHistory } from "../src/application/history/readHistory.js";
 import { toEventsCsv } from "../src/http/eventsCsv.js";
 import { InvalidRequestError } from "../src/errors/andonError.js";
 import { addMember, createTestTeam, expectSuccess, type TestTeam } from "./support/testTeam.js";
@@ -45,11 +46,26 @@ describe("joining someone", () => {
     expect(allEvents(team)[1]).toMatchObject({ kind: "join", memberId: tom.id, targetId: priya.id });
   });
 
-  it("only joins someone Disrupted or Blocked, and never yourself", () => {
-    const { team, priya, tom } = createTeam();
-    expect(handleClientMessage(team.dependencies, tom.id, { type: "join", memberId: priya.id })).toBeInstanceOf(InvalidRequestError);
-    send(team, tom.id, { type: "pull", colour: "red" });
+  it("joins anyone working, Clear included, but never someone Off or yourself", () => {
+    const { team, priya, tom, aisha } = createTeam();
+    send(team, aisha.id, { type: "pull", colour: "off" });
+    expect(handleClientMessage(team.dependencies, tom.id, { type: "join", memberId: aisha.id })).toBeInstanceOf(InvalidRequestError);
     expect(handleClientMessage(team.dependencies, tom.id, { type: "join", memberId: tom.id })).toBeInstanceOf(InvalidRequestError);
+
+    send(team, tom.id, { type: "join", memberId: priya.id });
+    expect(lightOf(team, tom.id)).toMatchObject({ colour: "amber", helping: priya.id });
+  });
+
+  it("keeps a join with someone Clear until one of you changes to Clear or Off", () => {
+    const { team, priya, tom } = createTeam();
+    send(team, tom.id, { type: "join", memberId: priya.id });
+
+    send(team, priya.id, { type: "pull", colour: "green", status: "Pairing" });
+    expect(lightOf(team, tom.id)).toMatchObject({ helping: priya.id });
+
+    send(team, priya.id, { type: "pull", colour: "amber" });
+    send(team, priya.id, { type: "pull", colour: "green" });
+    expect(lightOf(team, tom.id)).toMatchObject({ colour: "green", helping: null });
   });
 
   it("joins the person a helper is with, rather than making a chain", () => {
@@ -131,5 +147,24 @@ describe("joining someone", () => {
     const csv = toEventsCsv(allEvents(team), members).split("\n");
     expect(csv[0]).toBe("id,at,kind,memberId,name,colour,context,source,withMemberId,withName");
     expect(csv[2]).toContain(`,join,${tom.id},tom,,,,${priya.id},priya`);
+  });
+
+  it("gives each person's history every join they were part of, from before the window too", () => {
+    const { team, priya, tom, aisha } = createTeam();
+    send(team, priya.id, { type: "pull", colour: "red" });
+    send(team, tom.id, { type: "join", memberId: priya.id });
+    team.clock.advance(10 * MINUTE_MS);
+    const from = team.clock.now();
+    team.clock.advance(MINUTE_MS);
+    send(team, tom.id, { type: "join", memberId: aisha.id });
+
+    const history = expectSuccess(readHistory(team.dependencies, { from, to: team.clock.now() + 1, memberIds: [priya.id, tom.id] }));
+    const [priyaHistory, tomHistory] = history.members;
+    expect(priyaHistory?.joins.map((join) => join.kind)).toEqual(["join", "leave"]);
+    expect(tomHistory?.joins).toMatchObject([
+      { kind: "join", helperId: tom.id, targetId: priya.id },
+      { kind: "leave", helperId: tom.id, targetId: priya.id },
+      { kind: "join", helperId: tom.id, targetId: aisha.id },
+    ]);
   });
 });

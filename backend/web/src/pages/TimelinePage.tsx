@@ -1,5 +1,6 @@
 import type { ReactElement } from "react";
 
+import type { Member } from "@backend/domain/member.js";
 import { isMemberId, type MemberId } from "@backend/domain/memberId.js";
 import { useElementWidth } from "../hooks/useElementWidth.js";
 import { useHistory } from "../hooks/useHistory.js";
@@ -29,7 +30,7 @@ export const TimelinePage = ({ token, route, snapshot, onSignedOut }: TimelinePa
   const range = resolveWindow(window, now);
   const people = selectedPeople(route.query, snapshot);
   const lightsKey = snapshot.lights
-    .filter((light) => people.includes(light.memberId))
+    .filter((light) => people.includes(light.memberId) || (light.helping !== null && people.includes(light.helping)))
     .map((light) => `${light.memberId}:${light.colour}:${light.since}:${light.status ?? ""}:${light.helping ?? ""}`)
     .join("|");
   const { history, isLoading, problem } = useHistory(token, range, people, lightsKey, onSignedOut);
@@ -44,6 +45,7 @@ export const TimelinePage = ({ token, route, snapshot, onSignedOut }: TimelinePa
   const handleWindow = (changed: TimeWindow): void => update(people, changed);
   const canDraw = width > 0 && people.length > 0;
   const isUpToNow = range.to >= now;
+  const memberOfTeam = (memberId: MemberId): Member | null => memberById(snapshot.members, memberId);
   const currentHelpers = (memberId: MemberId): readonly Companion[] => (isUpToNow ? helpersOf(snapshot, memberId) : []);
   return (
     <div className="p-8">
@@ -60,7 +62,7 @@ export const TimelinePage = ({ token, route, snapshot, onSignedOut }: TimelinePa
       <div ref={ref} className="rounded-lg border border-border bg-surface-raised p-4">
         {problem !== null && <p className="text-sm text-ink-secondary">{problem}</p>}
         {people.length === 0 && <p className="py-16 text-center text-sm text-ink-muted">Pick people to see their lights over time.</p>}
-        {canDraw && <TimelineChart timelines={timelines} range={range} width={width - 32} helpersOf={currentHelpers} />}
+        {canDraw && <TimelineChart timelines={timelines} range={range} width={width - 32} helpersOf={currentHelpers} memberOf={memberOfTeam} />}
         {history?.isTruncated === true && <p className="mt-2 text-xs text-ink-muted">This window has more changes than can be shown. Choose a shorter one to see them all.</p>}
         {isLoading && <p className="mt-2 text-xs text-ink-muted">Loading…</p>}
       </div>

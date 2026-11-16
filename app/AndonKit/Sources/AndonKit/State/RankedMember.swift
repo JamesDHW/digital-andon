@@ -40,11 +40,12 @@ public enum Ranking {
         ranked(state.follows.filter { $0 != state.you }, in: state)
     }
 
-    /// Everyone Disrupted or Blocked who isn't with someone else, apart from you: who the join picker offers, most urgent first.
+    /// Everyone working who isn't with someone else, apart from you: who the join picker offers, most urgent first.
+    /// Clear people can be joined too, so time spent with people who barely use Digital Andon still counts.
     public static func joinable(in state: TeamState) -> [RankedMember] {
         let candidates = state.members.keys.filter { memberID in
             guard memberID != state.you, let light = state.light(for: memberID) else { return false }
-            return light.colour.isRaised && light.helping == nil
+            return light.colour.isWorking && light.helping == nil
         }
         return ranked(Array(candidates), in: state)
     }

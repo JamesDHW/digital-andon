@@ -1,4 +1,4 @@
-import { ChartLine, Download, Settings, Users } from "lucide-react";
+import { ChartLine, Download, Settings, Shuffle, Users } from "lucide-react";
 import type { MouseEvent, ReactElement, ReactNode } from "react";
 
 import type { Light } from "@backend/domain/light.js";
@@ -34,6 +34,7 @@ export const AppShell = ({ path, navigate, teamName, you, yourLight, onSignOut, 
         <nav className="w-56 shrink-0 border-r border-border bg-surface-raised p-3" aria-label="Sections">
           <NavItem href="/team" path={path} navigate={navigate} icon={<Users size={16} />} label="Team" />
           <NavItem href="/timeline" path={path} navigate={navigate} icon={<ChartLine size={16} />} label="Timeline" />
+          <NavItem href="/switching" path={path} navigate={navigate} icon={<Shuffle size={16} />} label="Context switching" />
           {isAdmin && (
             <>
               <p className="mt-6 mb-1 px-3 text-xs font-semibold tracking-wide text-ink-muted uppercase">Admin</p>

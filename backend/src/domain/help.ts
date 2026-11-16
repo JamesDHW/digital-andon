@@ -12,11 +12,11 @@ export type Help = {
   readonly joinedAt: number;
 };
 
-/** Going Clear or Off ends a join, from either side. */
-export const endsJoin = (colour: Colour): boolean => colour === "green" || colour === "off";
+/** Changing to Clear or Off ends a join, from either side. Someone joined while Clear stays joined until they change. */
+export const endsJoin = (from: Colour, to: Colour): boolean => from !== to && (to === "green" || to === "off");
 
-/** Only someone who needs attention can be joined. */
-export const isJoinable = (colour: Colour): boolean => colour === "amber" || colour === "red";
+/** Anyone working can be joined, Clear included: time spent with people who barely use Digital Andon still counts. */
+export const isJoinable = (colour: Colour): boolean => colour !== "off";
 
 /** The status a helper shows while they're with someone. */
 export const helpingStatus = (targetName: string): string | null => normaliseStatus(`with ${targetName}`);

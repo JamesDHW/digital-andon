@@ -17,4 +17,4 @@ export const TIME_RANGE_PRESETS: readonly TimeRangePreset[] = [
   { id: "90d", label: "Last 90 days", durationMs: 90 * DAY_MS },
 ];
 
-export const DEFAULT_PRESET: TimeRangePresetId = "7d";
+export const DEFAULT_PRESET: TimeRangePresetId = "today";

@@ -16,6 +16,8 @@ const lightSchema = z.object({ memberId: memberIdSchema, colour: colourSchema, s
 
 const lightChangeSchema = z.object({ at: z.number(), colour: colourSchema, status: z.string().nullable() });
 
+const joinChangeSchema = z.object({ at: z.number(), kind: z.enum(["join", "leave"]), helperId: memberIdSchema, targetId: memberIdSchema });
+
 export const snapshotSchema = z.object({
   teamName: z.string(),
   you: memberIdSchema,
@@ -38,7 +40,7 @@ export const liveMessageSchema = z.discriminatedUnion("type", [
 export const historySchema = z.object({
   from: z.number(),
   to: z.number(),
-  members: z.array(z.object({ memberId: memberIdSchema, start: lightChangeSchema, changes: z.array(lightChangeSchema) })),
+  members: z.array(z.object({ memberId: memberIdSchema, start: lightChangeSchema, changes: z.array(lightChangeSchema), joins: z.array(joinChangeSchema) })),
   isTruncated: z.boolean(),
 });
 
@@ -47,4 +49,5 @@ export const settingsSchema = z.object({ teamName: z.string(), allowedDomains: z
 export const errorBodySchema = z.object({ message: z.string() });
 
 export type History = z.infer<typeof historySchema>;
+export type JoinChange = z.infer<typeof joinChangeSchema>;
 export type TeamSettings = z.infer<typeof settingsSchema>;

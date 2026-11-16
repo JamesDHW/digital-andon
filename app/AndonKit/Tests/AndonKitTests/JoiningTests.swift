@@ -59,6 +59,11 @@ final class JoiningTests: XCTestCase {
         XCTAssertEqual(Ranking.joinable(in: state).map(\.member.name), ["Priya", "Aisha"])
     }
 
+    func testOffersClearPeopleLastSoTimeWithAnyoneCanBeLogged() {
+        let state = priyaJoinedByTom(and: [Fixtures.light("Aisha", .green, since: 1)])
+        XCTAssertEqual(Ranking.joinable(in: state).map(\.member.name), ["Priya", "Aisha"])
+    }
+
     func testWithdrawsTheBannerOnceSomeoneJoinsARed() {
         let alone = Fixtures.team([
             Fixtures.light("Priya", .red, since: millisecondsAgo(minutes: 20)),

@@ -64,7 +64,8 @@ final class AndonActions {
         closeDropdown()
     }
 
-    /// Work with someone Disrupted or Blocked: you go Disrupted, "with" them, until either of you goes Clear or Off.
+    /// Work with someone (usually Disrupted or Blocked, but anyone working): you go Disrupted, "with" them, until either
+    /// of you changes to Clear or Off.
     func join(_ memberID: MemberID) {
         guard let light = teamStore.yourLight else { return }
         if light.helping == nil {
@@ -80,11 +81,11 @@ final class AndonActions {
         teamStore.send(.leave)
     }
 
-    /// ⌃⌥J: with one person to join, join them; otherwise choose, most urgent first.
+    /// ⌃⌥J: with exactly one person Disrupted or Blocked, join them; otherwise choose, most urgent first.
     func joinSomeone() {
         guard let state = teamStore.state else { return }
-        let candidates = Ranking.joinable(in: state)
-        if candidates.count == 1, let only = candidates.first, state.youAreHelping != only.id {
+        let raised = Ranking.joinable(in: state).filter { $0.light.colour.isRaised }
+        if raised.count == 1, let only = raised.first, state.youAreHelping != only.id {
             return join(only.id)
         }
         showDropdown(.join)

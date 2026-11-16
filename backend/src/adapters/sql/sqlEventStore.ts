@@ -1,10 +1,10 @@
 import { z } from "zod";
 
 import type { EventStore } from "../../application/ports/eventStore.js";
-import type { AndonEvent, RecordedEvent } from "../../domain/andonEvent.js";
+import { isJoinEvent, type AndonEvent, type RecordedEvent } from "../../domain/andonEvent.js";
 import { colourSchema, memberIdSchema } from "../../protocol/fieldSchemas.js";
 import type { EventQuery } from "../../application/ports/eventStore.js";
-import { EVENT_COLUMNS, LISTED_EVENT_KINDS, STATUS_EVENT_KINDS } from "./sql.constants.js";
+import { EVENT_COLUMNS, JOIN_EVENT_KINDS, LISTED_EVENT_KINDS, STATUS_EVENT_KINDS } from "./sql.constants.js";
 import { runStatement, selectFirstRow, selectRows, type SqlExecutor, type SqlValue } from "./sqlExecutor.js";
 
 const eventRowBase = { id: z.number(), member_id: memberIdSchema, at: z.number() };
@@ -34,6 +34,20 @@ export const createSqlEventStore = (sql: SqlExecutor): EventStore => ({
       ...filters.bindings,
       query.limit,
     );
+  },
+  listJoins: (memberIds, before, limit) => {
+    const placeholders = memberPlaceholders(memberIds.length);
+    const rows = selectRows(
+      sql,
+      eventRowSchema,
+      `SELECT ${EVENT_COLUMNS} FROM events WHERE kind IN ${JOIN_EVENT_KINDS} AND at < ? AND (member_id IN (${placeholders}) OR note IN (${placeholders})) ORDER BY id LIMIT ?`,
+      before,
+      ...memberIds,
+      ...memberIds,
+      limit,
+    );
+    if (rows instanceof Error) return rows;
+    return rows.filter(isJoinEvent);
   },
   findLatestBefore: (memberId, at, kind) =>
     selectFirstRow(

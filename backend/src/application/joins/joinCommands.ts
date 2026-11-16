@@ -7,7 +7,7 @@ import { broadcastCurrentLight, changeLight } from "../changeLight.js";
 import { currentLight } from "../currentLight.js";
 import type { TeamDependencies } from "../teamDependencies.js";
 
-/** Join someone Disrupted or Blocked: you go Disrupted, "with" them, until either of you goes Clear or Off.
+/** Join someone who is working: you go Disrupted, "with" them, until either of you changes to Clear or Off.
  * Joining a helper joins the person they're with, so there are never chains; joining someone new leaves the last. */
 export const joinMember = (dependencies: TeamDependencies, helperId: MemberId, requestedId: MemberId): readonly Delivery[] | AndonError => {
   const targetId = personBeingHelped(dependencies, requestedId);
@@ -106,6 +106,6 @@ const joinProblem = (dependencies: TeamDependencies, helperId: MemberId, targetI
   if (targetId === helperId) return new InvalidRequestError("You can't join yourself, or someone who is with you.");
   const targetLight = currentLight(dependencies, targetId);
   if (targetLight instanceof Error) return targetLight;
-  if (!isJoinable(targetLight.colour)) return new InvalidRequestError("Only someone Disrupted or Blocked can be joined.");
+  if (!isJoinable(targetLight.colour)) return new InvalidRequestError("Someone who is Off can't be joined.");
   return undefined;
 };
