@@ -94,7 +94,6 @@ final class StatusItemController: NSObject, NSPopoverDelegate {
         button.action = #selector(toggleDropdown(_:))
         button.sendAction(on: [.leftMouseUp, .rightMouseUp])
         button.imagePosition = .imageOnly
-        imageView.frame = button.bounds
         button.addSubview(imageView)
         appearanceObservation = button.observe(\.effectiveAppearance) { [weak self] _, _ in
             Task { @MainActor in self?.render() }
@@ -172,8 +171,11 @@ final class StatusItemController: NSObject, NSPopoverDelegate {
         }
         guard let image = drawFrame(0) else { return }
         button.setAccessibilityLabel(StatusImageRenderer.accessibilityDescription(for: model))
-        statusItem.length = StatusImageRenderer.width(for: model) + AppConstants.statusItemPadding
-        imageView.frame = button.bounds
+        let length = StatusImageRenderer.width(for: model) + AppConstants.statusItemPadding
+        statusItem.length = length
+        // Sized from the new length, not the button: the button only takes its new width a moment later, so its
+        // bounds can still be the old, narrower width and would cut off the faces on the right.
+        imageView.frame = NSRect(x: 0, y: 0, width: length, height: NSStatusBar.system.thickness)
         imageView.show(image, dimmed: model.isBreathing ? drawFrame(1) : nil, scale: scale, isBoosted: isBoosted)
     }
 

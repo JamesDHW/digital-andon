@@ -32,7 +32,7 @@ enum AppConstants {
     static let pulsePeriodSeconds: TimeInterval = 2
     /// A helper's face is this much of the person's, and this much of it shows past the face in front.
     static let helperScale: CGFloat = 0.78
-    static let helperOverlap: CGFloat = 0.5
+    static let helperOverlap: CGFloat = 0.7
     static let socketPingText = "ping"
     static let socketPongText = "pong"
 }

@@ -29,7 +29,7 @@ enum MenuBarLayout {
 
     /// Someone who has joined a person: a smaller face behind theirs, showing this much past the one in front.
     static let helperDiameter: CGFloat = 16
-    static let helperStep: CGFloat = 8
+    static let helperStep: CGFloat = 12
 
     static var photoInset: CGFloat { ringWidth + ringToPhotoGap }
 

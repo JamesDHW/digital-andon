@@ -45,7 +45,7 @@ final class StatusImageView: NSView {
         wantsLayer = true
         layerContentsRedrawPolicy = .never
         layer?.contentsGravity = .center
-        autoresizingMask = [.width, .height]
+        autoresizingMask = []
     }
 
     required init?(coder: NSCoder) {
