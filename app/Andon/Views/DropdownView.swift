@@ -38,6 +38,8 @@ struct DropdownView: View {
             if let state = teamStore.state {
                 JoinPickerView(state: state, now: Date(), onChoose: actions.chooseFromJoinPicker, onCancel: actions.closeDropdown)
             }
+        case .following:
+            FollowingPage(teamStore: teamStore, actions: actions, onBack: { navigation.page = .team })
         case .settings:
             SettingsPage(
                 accountController: accountController,
@@ -92,6 +94,10 @@ struct DropdownView: View {
             Button { navigation.page = .settings } label: {
                 Label("Settings", systemImage: "gearshape")
             }
+            Button { navigation.page = .following } label: {
+                Label("Following", systemImage: "person.2")
+            }
+            .help("Choose who appears in your menu bar")
             Spacer()
             Button("Quit", action: actions.quit)
         }

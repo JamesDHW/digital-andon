@@ -14,6 +14,7 @@ enum AppConstants {
     static let popoverWidth: CGFloat = 360
     static let settingsMaxHeight: CGFloat = 460
     static let joinPickerMaxHeight: CGFloat = 380
+    static let followingMaxHeight: CGFloat = 420
     static let popoverReopenGuardSeconds: TimeInterval = 0.3
     static let deviceNameMaxLength = 80
     static let elapsedTimeRefreshSeconds: TimeInterval = 30

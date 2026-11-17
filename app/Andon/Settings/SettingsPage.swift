@@ -1,7 +1,8 @@
 import AndonKit
 import SwiftUI
 
-/// Settings, inside the popover: you, the display, notifications, shortcuts and who you follow, then updates and signing out.
+/// Settings, inside the popover: you, the display, notifications and shortcuts, then updates and signing out.
+/// Who you follow has its own page, from the person icon on the team page.
 struct SettingsPage: View {
     @ObservedObject var accountController: AccountController
     @ObservedObject var teamStore: TeamStore
@@ -25,11 +26,6 @@ struct SettingsPage: View {
                     }
                     SettingsSection(title: "Shortcuts") {
                         ShortcutSettingsView()
-                    }
-                    if let state = teamStore.state {
-                        SettingsSection(title: "Following") {
-                            FollowingSettingsView(state: state, actions: actions)
-                        }
                     }
                 }
                 .padding(16)

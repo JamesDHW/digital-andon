@@ -131,7 +131,7 @@ Use two Macs, or one Mac plus `pnpm fake-member`:
 
 1. **Install:** the dmg opens on a Mac that has never run Digital Andon, with no Gatekeeper warning.
 2. **Join:** click **Continue with Google** with an account on an allowed domain. Your Google photo appears on your lead's bar within seconds.
-3. **Follow:** follow someone from "Everyone else", unfollow them (right-click their row), then sign in on a second Mac. The same follow list is there.
+3. **Follow:** open **Following** (the person icon at the bottom of the dropdown), type to find someone and switch them on; switch someone off and they stay where they are until you reopen the page. Sign in on a second Mac: the same follow list is there. (You can also follow from "Everyone else", or unfollow by right-clicking a row.)
 4. **Blocked:** click Blocked in the dropdown. Your squircle turns red at once; about 3 seconds later your lead's bar shows your avatar ringed in red, plus a banner.
 5. **Breathing:** leave it red for 10 minutes. Your squircle and your avatar on the lead's bar start to breathe.
 6. **Reminder:** pull red again and ignore it. One reminder arrives after the configured time (set 2 minutes in Settings to test), and nothing after that.
