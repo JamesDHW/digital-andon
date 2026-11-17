@@ -46,6 +46,22 @@ final class JoiningTests: XCTestCase {
         XCTAssertNil(model.breathesNextAt)
     }
 
+    func testSomeoneWithYouIsTuckedBehindYourSquircleAndLeftOutOfYourLists() {
+        let state = Fixtures.team(
+            [
+                Fixtures.light("Tom", .amber, since: millisecondsAgo(minutes: 3), status: "with Lead", helping: "Lead"),
+                Fixtures.light("Priya", .green, since: 1),
+            ],
+            leadColour: .red
+        )
+        let menuBar = MenuBarModel.make(state: state, connection: .connected, now: now)
+        XCTAssertEqual(menuBar.ownLight?.helpers.map(\.member.name), ["Tom"])
+        XCTAssertEqual(menuBar.people.map(\.member.name), ["Priya"])
+
+        let dropdown = DropdownModel.make(state: state)
+        XCTAssertEqual((dropdown.red + dropdown.amber + dropdown.green + dropdown.off + dropdown.everyoneElse).map(\.rankedMember.member.name), ["Priya"])
+    }
+
     func testGoingClearOrOffLocallyEndsTheJoinButAStatusChangeKeepsIt() {
         let light = Fixtures.light("Tom", .amber, since: 1, status: "with Priya", helping: "Priya")
         XCTAssertNil(light.pulled(.green, atMilliseconds: 2).helping)

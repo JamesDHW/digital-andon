@@ -15,19 +15,24 @@ enum StatusImageRenderer {
     static func width(for model: MenuBarModel) -> CGFloat {
         if model.hasNothingToShow { return MenuBarLayout.placeholderDiameter + MenuBarLayout.edgeInset * 2 }
         let facesEnd = faces(for: model).map(\.rect.maxX).max() ?? peopleOriginX(for: model)
-        let ownLightEnd = model.ownLight == nil ? 0 : MenuBarLayout.edgeInset + MenuBarLayout.ownLightSide
+        let ownLightEnd = ownHelperFaces(for: model).map(\.rect.maxX).max() ?? (model.ownLight == nil ? 0 : MenuBarLayout.edgeInset + MenuBarLayout.ownLightSide)
         return (max(facesEnd, ownLightEnd) + MenuBarLayout.edgeInset).rounded(.up)
     }
 
-    /// Your squircle first (unless you're off), then everyone working, red first, each with whoever has joined them
-    /// tucked behind; the first person sits on top.
+    /// Your squircle first (unless you're off), with whoever is with you tucked behind it, then everyone working, red
+    /// first, each with whoever has joined them tucked behind; the first person sits on top.
     static func draw(_ model: MenuBarModel, rendering: LightRendering, photos: [MemberID: NSImage]) {
         let alpha = model.isDimmed ? MenuBarPalette.dimmedAlpha : 1
         if model.hasNothingToShow {
             return LightShapes.drawPlaceholder(in: centredSquare(side: MenuBarLayout.placeholderDiameter, x: MenuBarLayout.edgeInset), isDarkMenuBar: rendering.isDarkMenuBar, alpha: alpha)
         }
+        let squircleRect = centredSquare(side: MenuBarLayout.ownLightSide, x: MenuBarLayout.edgeInset)
         if let ownLight = model.ownLight {
-            LightShapes.drawOwnLight(ownLight, in: centredSquare(side: MenuBarLayout.ownLightSide, x: MenuBarLayout.edgeInset), rendering: rendering, alpha: alpha)
+            LightShapes.drawOwnLight(ownLight, in: squircleRect, rendering: rendering, alpha: alpha)
+        }
+        let ownHelpers = ownHelperFaces(for: model)
+        for (index, face) in ownHelpers.enumerated() {
+            LightShapes.drawFace(face, covering: ownHelpers[..<index].map(\.rect), behindSquircle: squircleRect, photo: photos[face.member.id], rendering: rendering, alpha: alpha)
         }
         let faces = faces(for: model)
         for (index, face) in faces.enumerated() {
@@ -37,11 +42,14 @@ enum StatusImageRenderer {
 
     /// Everyone whose photo the status item shows, helpers included.
     static func members(in model: MenuBarModel) -> [Member] {
-        model.people.flatMap { [$0.member] + $0.helpers.map(\.member) }
+        (model.ownLight?.helpers ?? []).map(\.member) + model.people.flatMap { [$0.member] + $0.helpers.map(\.member) }
     }
 
     static func accessibilityDescription(for model: MenuBarModel) -> String {
-        let ownPart = model.ownLight.map { "Your status: \(LightNames.name($0.colour))." } ?? "You're off."
+        let ownPart = model.ownLight.map { ownLight in
+            let helpers = ownLight.helpers.isEmpty ? "" : ", with \(ListFormatter.localizedString(byJoining: ownLight.helpers.map(\.member.name)))"
+            return "Your status: \(LightNames.name(ownLight.colour))\(helpers)."
+        } ?? "You're off."
         let peopleParts = model.people.map { person in
             let waiting = person.isBreathing ? ", waiting over 10 minutes" : ""
             let helpers = person.helpers.isEmpty ? "" : ", with \(ListFormatter.localizedString(byJoining: person.helpers.map(\.member.name)))"
@@ -71,9 +79,21 @@ enum StatusImageRenderer {
         }
     }
 
+    /// Whoever is with you, peeking out from behind your squircle.
+    static func ownHelperFaces(for model: MenuBarModel) -> [MenuBarFace] {
+        guard let ownLight = model.ownLight else { return [] }
+        return ownLight.helpers.enumerated().map { index, helper in
+            MenuBarFace(
+                member: helper.member, colour: helper.colour, isBreathing: false, isStale: false,
+                rect: centredSquare(side: MenuBarLayout.helperDiameter, x: MenuBarLayout.edgeInset + MenuBarLayout.ownHelperOffset(index: index))
+            )
+        }
+    }
+
     private static func peopleOriginX(for model: MenuBarModel) -> CGFloat {
-        guard model.ownLight != nil else { return MenuBarLayout.edgeInset }
-        return MenuBarLayout.edgeInset + MenuBarLayout.ownLightSide + MenuBarLayout.ownToPeopleGap
+        guard let ownLight = model.ownLight else { return MenuBarLayout.edgeInset }
+        let helpersWidth = CGFloat(ownLight.helpers.count) * MenuBarLayout.helperStep
+        return MenuBarLayout.edgeInset + MenuBarLayout.ownLightSide + helpersWidth + MenuBarLayout.ownToPeopleGap
     }
 
     private static func centredSquare(side: CGFloat, x: CGFloat) -> NSRect {

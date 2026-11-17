@@ -44,4 +44,9 @@ enum MenuBarLayout {
     static func helperOffset(index: Int) -> CGFloat {
         avatarDiameter - helperDiameter + helperStep * CGFloat(index + 1)
     }
+
+    /// Where the face of someone with you starts, from the left of your squircle.
+    static func ownHelperOffset(index: Int) -> CGFloat {
+        ownLightSide - helperDiameter + helperStep * CGFloat(index + 1)
+    }
 }

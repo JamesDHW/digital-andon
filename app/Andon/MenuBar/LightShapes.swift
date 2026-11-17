@@ -11,15 +11,19 @@ enum LightShapes {
         squircle(in: rect, inset: 0).fill()
     }
 
-    /// The ring carries the colour; inside it, their photo or initial. Anything already drawn
-    /// (in `covering`) is cut out, with a small transparent gap, so overlapping avatars read as a stack.
-    static func drawFace(_ face: MenuBarFace, covering: [NSRect], photo: NSImage?, rendering: LightRendering, alpha: CGFloat) {
+    /// The ring carries the colour; inside it, their photo or initial. Anything already drawn (the faces in
+    /// `covering`, and your squircle if the face is behind it) is cut out, with a small transparent gap, so
+    /// overlapping marks read as a stack.
+    static func drawFace(_ face: MenuBarFace, covering: [NSRect], behindSquircle squircleRect: NSRect? = nil, photo: NSImage?, rendering: LightRendering, alpha: CGFloat) {
         let rect = face.rect
         let personAlpha = alpha * (face.isStale ? MenuBarLayout.staleAlpha : 1)
         NSGraphicsContext.saveGraphicsState()
         for coveringRect in covering {
             let cutout = coveringRect.insetBy(dx: -MenuBarLayout.overlapCutout, dy: -MenuBarLayout.overlapCutout)
             outsideClip(of: NSBezierPath(ovalIn: cutout)).addClip()
+        }
+        if let squircleRect {
+            outsideClip(of: squircle(in: squircleRect, inset: -MenuBarLayout.overlapCutout)).addClip()
         }
         let ringAlpha = personAlpha * breathingAlpha(isBreathing: face.isBreathing, rendering: rendering)
         drawRing(in: rect, colour: MenuBarPalette.fill(for: face.colour, rendering: rendering).withAlphaComponent(ringAlpha))

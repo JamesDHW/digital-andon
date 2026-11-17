@@ -48,10 +48,7 @@ struct OwnLightControl: View {
             }
         }
         if let state, !state.helpers(of: state.you).isEmpty {
-            let names = state.helpers(of: state.you).map(\.name)
-            Label("\(ListFormatter.localizedString(byJoining: names)) \(names.count == 1 ? "is" : "are") with you", systemImage: "person.2.fill")
-                .font(.callout)
-                .foregroundStyle(.secondary)
+            WithYouRow(state: state)
         }
     }
 

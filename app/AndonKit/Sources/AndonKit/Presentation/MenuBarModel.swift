@@ -11,10 +11,13 @@ public enum ConnectionState: Equatable, Sendable {
 public struct OwnLightIndicator: Equatable, Sendable {
     public let colour: Colour
     public let isBreathing: Bool
+    /// Whoever has joined you, tucked behind your squircle; they're left out of the people beside it.
+    public let helpers: [HelperIndicator]
 
-    public init(colour: Colour, isBreathing: Bool) {
+    public init(colour: Colour, isBreathing: Bool, helpers: [HelperIndicator] = []) {
         self.colour = colour
         self.isBreathing = isBreathing
+        self.helpers = helpers
     }
 }
 
@@ -74,16 +77,16 @@ public struct MenuBarModel: Equatable, Sendable {
         let visible = visiblePeople(in: state)
         let isYourRedHelped = state.isHelped(state.you)
         return MenuBarModel(
-            ownLight: yourLight.map { OwnLightIndicator(colour: $0.colour, isBreathing: state.isBreathing(state.you, at: now)) },
+            ownLight: yourLight.map { light in
+                OwnLightIndicator(colour: light.colour, isBreathing: state.isBreathing(state.you, at: now), helpers: helperIndicators(of: state.you, in: state))
+            },
             people: visible.map { ranked in
                 PersonIndicator(
                     member: ranked.member,
                     colour: ranked.light.colour,
                     isBreathing: ranked.isBreathing(at: now),
                     isStale: !ranked.isOnline,
-                    helpers: ranked.helpers.compactMap { helper in
-                        state.light(for: helper.id).map { HelperIndicator(member: helper, colour: $0.colour) }
-                    }
+                    helpers: helperIndicators(of: ranked.id, in: state)
                 )
             },
             isDimmed: connection != .connected,
@@ -94,12 +97,20 @@ public struct MenuBarModel: Equatable, Sendable {
         )
     }
 
+    private static func helperIndicators(of memberID: MemberID, in state: TeamState) -> [HelperIndicator] {
+        state.helpers(of: memberID).compactMap { helper in
+            state.light(for: helper.id).map { HelperIndicator(member: helper, colour: $0.colour) }
+        }
+    }
+
     /// Off people disappear. A disconnected Mac's green is dropped too; a disconnected red or amber stays, faded.
-    /// Someone with a person you can see is drawn behind that person instead of on their own.
+    /// Someone with a person you can see is drawn behind that person instead of on their own, and someone with you
+    /// is drawn behind your squircle: they're Disrupted for everyone else, but for you they're simply with you.
     private static func visiblePeople(in state: TeamState) -> [RankedMember] {
         let working = Ranking.followed(in: state)
             .filter { $0.light.colour.isWorking }
             .filter { $0.isOnline || $0.light.colour.isRaised }
+            .filter { $0.light.helping != state.you }
         let shownIDs = Set(working.map(\.id))
         return working.filter { ranked in
             guard let helping = ranked.light.helping else { return true }
