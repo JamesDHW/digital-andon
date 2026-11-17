@@ -10,27 +10,28 @@ import { SOCKET_PING_MS, SOCKET_RETRY_MS } from "../domain/web.constants.js";
 export type SnapshotState = {
   readonly snapshot: TeamSnapshot | null;
   readonly problem: string | null;
-  /** True while the socket is connected and changes arrive the moment they happen. */
-  readonly isLive: boolean;
+  /** When the socket last connected, so changes arrive the moment they happen; null while it's down. Changes during a
+   * gap aren't replayed, so anything built from them should reload when this changes. */
+  readonly liveSince: number | null;
 };
 
 /** Loads the team, then keeps it live over a socket. If the socket drops, it reloads and reconnects. */
 export const useSnapshot = (token: string, onSignedOut: () => void): SnapshotState => {
-  const [state, setState] = useState<SnapshotState>({ snapshot: null, problem: null, isLive: false });
+  const [state, setState] = useState<SnapshotState>({ snapshot: null, problem: null, liveSince: null });
 
   useEffect(() => {
     const cancellation = new AbortController();
     // A function, so each check reads the signal afresh after an await.
     const isCancelled = (): boolean => cancellation.signal.aborted;
     const retryLater = (): void => {
-      setState((previous) => ({ ...previous, isLive: false }));
+      setState((previous) => ({ ...previous, liveSince: null }));
       window.setTimeout(() => void connect(), SOCKET_RETRY_MS);
     };
     const listen = (): void => {
       const socket = openLiveSocket(token);
       const pinger = window.setInterval(() => socket.send("ping"), SOCKET_PING_MS);
       cancellation.signal.addEventListener("abort", () => socket.close());
-      socket.addEventListener("open", () => setState((previous) => ({ ...previous, isLive: true, problem: null })));
+      socket.addEventListener("open", () => setState((previous) => ({ ...previous, liveSince: Date.now(), problem: null })));
       socket.addEventListener("message", (event: MessageEvent<unknown>) => {
         const message = readLiveMessage(event.data);
         if (message === null) return;

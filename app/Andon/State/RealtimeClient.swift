@@ -103,7 +103,7 @@ final class RealtimeClient {
         closeSocket()
         guard session != nil else { return }
         onConnectionChange?(.disconnected)
-        let delay = ReconnectPolicy.delaySeconds(afterFailedAttempts: failedAttempts)
+        let delay = ReconnectPolicy.delaySeconds(afterFailedAttempts: failedAttempts, jitter: Double.random(in: 0...1))
         failedAttempts += 1
         reconnectTask = Task { [weak self] in
             try? await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))

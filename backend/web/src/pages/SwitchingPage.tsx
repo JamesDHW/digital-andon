@@ -18,21 +18,21 @@ type SwitchingPageProps = {
   readonly token: string;
   readonly route: Route;
   readonly snapshot: TeamSnapshot;
+  readonly liveSince: number | null;
   readonly onSignedOut: () => void;
 };
 
 /** One person's context switching: who they joined, when, and what each of those people was working on. */
-export const SwitchingPage = ({ token, route, snapshot, onSignedOut }: SwitchingPageProps): ReactElement => {
+export const SwitchingPage = ({ token, route, snapshot, liveSince, onSignedOut }: SwitchingPageProps): ReactElement => {
   const now = useNow(LIVE_WINDOW_REFRESH_MS);
   const window = windowFromQuery(route.query);
   const range = resolveWindow(window, now);
   const personId = selectedPerson(route.query, snapshot);
   const person = memberById(snapshot.members, personId);
-  const liveKey = snapshot.lights.map((light) => `${light.memberId}:${light.colour}:${light.since}:${light.status ?? ""}:${light.helping ?? ""}`).join("|");
-  const own = useHistory(token, range, [personId], liveKey, onSignedOut);
+  const own = useHistory(token, window, [personId], snapshot.lights, liveSince, onSignedOut);
   const ownHistory = own.history?.members.find((history) => history.memberId === personId) ?? null;
   const joinedIds = joinedInWindow(person, ownHistory, range, now);
-  const others = useHistory(token, range, joinedIds, liveKey, onSignedOut);
+  const others = useHistory(token, window, joinedIds, snapshot.lights, liveSince, onSignedOut);
   const { ref, width } = useElementWidth<HTMLDivElement>();
   const view = ownHistory === null ? null : switchingView(person, ownHistory, others.history?.members ?? [], snapshot.members, range, Date.now());
 

@@ -1,5 +1,9 @@
 export const EVENT_PAGE_DEFAULT_LIMIT = 500;
 export const EVENT_PAGE_MAX_LIMIT = 5000;
+/** On a full page of events: the afterId that fetches the next page. Absent on the last page. */
+export const EVENT_PAGE_NEXT_HEADER = "x-next-after-id";
+/** How many events a page holds, since a CSV row count can't be read from its lines alone. */
+export const EVENT_PAGE_COUNT_HEADER = "x-event-count";
 export const DEVICE_NAME_MAX_LENGTH = 80;
 export const MEMBER_PATH_PATTERN = /^\/team\/members\/([^/]+)$/;
 export const CSV_HEADER = "id,at,kind,memberId,name,colour,context,source,withMemberId,withName";

@@ -12,5 +12,11 @@ export const SCHEMA_STATEMENTS = [
   "UPDATE members SET avatar_url = NULL WHERE avatar_url NOT LIKE 'https://%.googleusercontent.com/%'",
   "CREATE TABLE IF NOT EXISTS presence_checks (member_id TEXT PRIMARY KEY, due_at INTEGER NOT NULL)",
   "CREATE TABLE IF NOT EXISTS sign_in_attempts (state_hash TEXT PRIMARY KEY, code_verifier TEXT NOT NULL, client TEXT NOT NULL, device_name TEXT NOT NULL, expires_at INTEGER NOT NULL)",
+  // Joins are a small share of events: this lets a history read them newest first without scanning every light change.
+  // Its WHERE must match JOIN_EVENT_KINDS as written, or SQLite won't use it.
+  // Finds someone's last pull or status before a window without walking back through all of their other events:
+  // without it, someone who never sets a status costs a scan of their whole history on every timeline.
+  "CREATE INDEX IF NOT EXISTS events_by_member_kind ON events (member_id, kind, at)",
+  "CREATE INDEX IF NOT EXISTS events_joins ON events (at) WHERE kind IN ('join', 'leave')",
   "CREATE TABLE IF NOT EXISTS helps (helper_id TEXT PRIMARY KEY, target_id TEXT NOT NULL, return_colour TEXT NOT NULL, return_status TEXT, joined_at INTEGER NOT NULL)",
 ] as const;

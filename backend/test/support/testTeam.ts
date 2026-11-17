@@ -16,7 +16,7 @@ import { AndonError } from "../../src/errors/andonError.js";
 import { createFakeClock, type FakeClock } from "./fakeClock.state.js";
 import { createFakeGoogle, type FakeGoogle } from "./fakeGoogle.state.js";
 import { createFakeSecrets } from "./fakeSecrets.state.js";
-import { createMemorySql } from "./memorySql.js";
+import { createMemorySql } from "./memorySql.state.js";
 import { createRecordingMailer, type RecordingMailer } from "./recordingMailer.state.js";
 import { TEST_ORIGIN, TEST_START_TIME } from "./testTeam.constants.js";
 
@@ -25,6 +25,7 @@ export type TestTeam = {
   readonly clock: FakeClock;
   readonly mailer: RecordingMailer;
   readonly google: FakeGoogle;
+  readonly mostBoundParameters: () => number;
 };
 
 export const createTestTeam = (options: { readonly allowedDomains?: readonly string[]; readonly bootstrapAdminEmail?: string } = {}): TestTeam => {
@@ -50,7 +51,7 @@ export const createTestTeam = (options: { readonly allowedDomains?: readonly str
     bootstrapAdminEmail: options.bootstrapAdminEmail ?? null,
     google,
   };
-  return { dependencies, clock, mailer, google };
+  return { dependencies, clock, mailer, google, mostBoundParameters: sql.mostBoundParameters };
 };
 
 export const memberIdOf = (rawMemberId: string): MemberId => {

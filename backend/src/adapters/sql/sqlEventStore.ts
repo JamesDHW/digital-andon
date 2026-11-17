@@ -1,10 +1,11 @@
 import { z } from "zod";
 
+import { AndonError } from "../../errors/andonError.js";
 import type { EventStore } from "../../application/ports/eventStore.js";
 import { isJoinEvent, type AndonEvent, type RecordedEvent } from "../../domain/andonEvent.js";
 import { colourSchema, memberIdSchema } from "../../protocol/fieldSchemas.js";
 import type { EventQuery } from "../../application/ports/eventStore.js";
-import { EVENT_COLUMNS, JOIN_EVENT_KINDS, LISTED_EVENT_KINDS, STATUS_EVENT_KINDS } from "./sql.constants.js";
+import { EVENT_COLUMNS, JOIN_EVENT_KINDS, LISTED_EVENT_KINDS, MEMBER_ID_LIST, STATUS_STORED_KINDS } from "./sql.constants.js";
 import { runStatement, selectFirstRow, selectRows, type SqlExecutor, type SqlValue } from "./sqlExecutor.js";
 
 const eventRowBase = { id: z.number(), member_id: memberIdSchema, at: z.number() };
@@ -35,48 +36,59 @@ export const createSqlEventStore = (sql: SqlExecutor): EventStore => ({
       query.limit,
     );
   },
-  listJoins: (memberIds, before, limit) => {
-    const placeholders = memberPlaceholders(memberIds.length);
+  /** Read newest first, so if there are more than the limit, the ones dropped are the oldest, furthest from the window. */
+  listJoins: (memberIds, during, limit) => {
+    const memberList = JSON.stringify(memberIds);
     const rows = selectRows(
       sql,
       eventRowSchema,
-      `SELECT ${EVENT_COLUMNS} FROM events WHERE kind IN ${JOIN_EVENT_KINDS} AND at < ? AND (member_id IN (${placeholders}) OR note IN (${placeholders})) ORDER BY id LIMIT ?`,
-      before,
-      ...memberIds,
-      ...memberIds,
+      `SELECT ${EVENT_COLUMNS} FROM events WHERE kind IN ${JOIN_EVENT_KINDS} AND at >= ? AND at < ? AND (member_id IN ${MEMBER_ID_LIST} OR note IN ${MEMBER_ID_LIST}) ORDER BY at DESC, id DESC LIMIT ?`,
+      during.from,
+      during.to,
+      memberList,
+      memberList,
       limit,
     );
     if (rows instanceof Error) return rows;
-    return rows.filter(isJoinEvent);
+    return rows.filter(isJoinEvent).toReversed();
   },
-  findLatestBefore: (memberId, at, kind) =>
-    selectFirstRow(
-      sql,
-      eventRowSchema,
-      `SELECT ${EVENT_COLUMNS} FROM events WHERE member_id = ? AND at < ? AND kind IN ${kind === "pull" ? "('pull')" : STATUS_EVENT_KINDS} ORDER BY at DESC, id DESC LIMIT 1`,
-      memberId,
-      at,
-    ),
+  /** One indexed lookup per stored kind, newest wins: asked for both kinds at once, SQLite walks back through all of
+   * the person's events instead. */
+  findLatestBefore: (memberId, at, kind) => {
+    const candidates = storedKindsOf(kind).map((storedKind) =>
+      selectFirstRow(
+        sql,
+        eventRowSchema,
+        `SELECT ${EVENT_COLUMNS} FROM events WHERE member_id = ? AND kind = ? AND at < ? ORDER BY at DESC, id DESC LIMIT 1`,
+        memberId,
+        storedKind,
+        at,
+      ),
+    );
+    const failure = candidates.find((candidate) => candidate instanceof AndonError);
+    if (failure !== undefined) return failure;
+    return newest(candidates.filter((candidate): candidate is RecordedEvent => candidate !== null && !(candidate instanceof AndonError)));
+  },
 });
+
+/** Statuses were stored with the kind "topic" before; both are read as status. */
+const storedKindsOf = (kind: AndonEvent["kind"]): readonly string[] => (kind === "status" ? STATUS_STORED_KINDS : [kind]);
+
+/** Latest first; ids break ties between events in the same millisecond. */
+const newest = (events: readonly RecordedEvent[]): RecordedEvent | null =>
+  events.toSorted((first, second) => (second.at === first.at ? second.id - first.id : second.at - first.at)).at(0) ?? null;
 
 type QueryFilters = {
   readonly clause: string;
   readonly bindings: readonly SqlValue[];
 };
 
-/** An empty list matches nobody: "IN (NULL)" is never true. */
-const memberPlaceholders = (count: number): string => {
-  if (count === 0) return "NULL";
-  return Array.from({ length: count }, () => "?").join(", ");
-};
-
 /** Only the filters asked for; each adds its own placeholders, so values never enter the SQL text. */
 const queryFilters = (query: EventQuery): QueryFilters => {
-  const memberIds = query.memberIds ?? [];
   const filters: readonly (QueryFilters | null)[] = [
     query.from === null ? null : { clause: " AND at >= ?", bindings: [query.from] },
     query.to === null ? null : { clause: " AND at < ?", bindings: [query.to] },
-    query.memberIds === null ? null : { clause: ` AND member_id IN (${memberPlaceholders(memberIds.length)})`, bindings: memberIds },
+    query.memberIds === null ? null : { clause: ` AND member_id IN ${MEMBER_ID_LIST}`, bindings: [JSON.stringify(query.memberIds)] },
   ];
   const chosen = filters.filter((filter): filter is QueryFilters => filter !== null);
   return { clause: chosen.map((filter) => filter.clause).join(""), bindings: chosen.flatMap((filter) => filter.bindings) };

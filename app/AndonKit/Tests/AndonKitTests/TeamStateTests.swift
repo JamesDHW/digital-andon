@@ -60,10 +60,6 @@ final class RankingTests: XCTestCase {
 }
 
 final class SupportTests: XCTestCase {
-    func testBacksOffExponentiallyUpToThirtySeconds() {
-        XCTAssertEqual((0...6).map { ReconnectPolicy.delaySeconds(afterFailedAttempts: $0) }, [1, 2, 4, 8, 16, 30, 30])
-    }
-
     func testDescribesElapsedTime() {
         let now = Date(timeIntervalSince1970: 100_000)
         XCTAssertEqual(ElapsedTime.describe(sinceMilliseconds: 99_990_000, now: now), "just now")

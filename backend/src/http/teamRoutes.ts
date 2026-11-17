@@ -4,9 +4,11 @@ import { removeMember } from "../application/admin/removeMember.js";
 import { greetMember } from "../application/greetMember.js";
 import { readHistory } from "../application/history/readHistory.js";
 import { changeTeamSettings, readTeamSettings } from "../application/admin/teamSettings.js";
+import type { RecordedEvent } from "../domain/andonEvent.js";
 import { isMemberId } from "../domain/memberId.js";
 import { authenticatedMember } from "./authenticatedMember.js";
 import { toEventsCsv } from "./eventsCsv.js";
+import { EVENT_PAGE_COUNT_HEADER, EVENT_PAGE_NEXT_HEADER } from "./http.constants.js";
 import { respondOnly, type HttpContext, type HttpOutcome } from "./httpOutcome.js";
 import { errorResponse, jsonResponse } from "./httpResponses.js";
 import { parseJsonBody, parseQuery } from "./requestBody.js";
@@ -67,11 +69,21 @@ export const handleListEvents = async (context: HttpContext): Promise<HttpOutcom
     memberIds: query.memberIds ?? null,
   });
   if (events instanceof Error) return respondOnly(errorResponse(events));
-  if (query.format === "json") return respondOnly(jsonResponse({ events }));
+  const pageHeaders = eventPageHeaders(events, query.limit);
+  if (query.format === "json") return respondOnly(Response.json({ events }, { headers: pageHeaders }));
 
   const members = context.dependencies.members.list();
   if (members instanceof Error) return respondOnly(errorResponse(members));
-  return respondOnly(new Response(toEventsCsv(events, members), { headers: { "content-type": "text/csv; charset=utf-8" } }));
+  return respondOnly(new Response(toEventsCsv(events, members), { headers: { "content-type": "text/csv; charset=utf-8", ...pageHeaders } }));
+};
+
+/** A full page may have more after it, so it says where the next one starts. */
+const eventPageHeaders = (events: readonly RecordedEvent[], limit: number): Readonly<Record<string, string>> => {
+  const count = { [EVENT_PAGE_COUNT_HEADER]: String(events.length) };
+  const last = events.at(-1);
+  const isLastPage = last === undefined || events.length < limit;
+  if (isLastPage) return count;
+  return { ...count, [EVENT_PAGE_NEXT_HEADER]: String(last.id) };
 };
 
 /** Everything the web app shows: the greeting the Mac app gets when it connects, plus the team's name. */

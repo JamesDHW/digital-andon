@@ -3,7 +3,7 @@ import { isLightEvent, type JoinEvent, type LightEvent } from "../../domain/ando
 import { replayChanges, startingLight, type LightChange } from "../../domain/history.js";
 import type { MemberId } from "../../domain/memberId.js";
 import type { TeamDependencies } from "../teamDependencies.js";
-import { HISTORY_EVENT_LIMIT, HISTORY_MAX_MEMBERS, HISTORY_MAX_SPAN_MS } from "./history.constants.js";
+import { HISTORY_EVENT_LIMIT, HISTORY_JOIN_LOOKBACK_MS, HISTORY_MAX_MEMBERS, HISTORY_MAX_SPAN_MS } from "./history.constants.js";
 
 export type HistoryQuery = {
   readonly from: number;
@@ -25,8 +25,8 @@ export type MemberHistory = {
   readonly start: LightChange;
   /** Every change after `from` and before `to`, oldest first. */
   readonly changes: readonly LightChange[];
-  /** Every join and leave they were part of before `to`, oldest first, including those before `from`, so who was
-   * with whom at the start of the window is known. */
+  /** Every join and leave they were part of before `to`, oldest first, including those in the week before `from`, so
+   * who was with whom at the start of the window is known. */
   readonly joins: readonly JoinChange[];
 };
 
@@ -46,7 +46,7 @@ export const readHistory = (dependencies: TeamDependencies, query: HistoryQuery)
   const events = dependencies.events.list({ afterId: 0, limit: HISTORY_EVENT_LIMIT, from: query.from, to: query.to, memberIds: query.memberIds });
   if (events instanceof Error) return events;
 
-  const joins = dependencies.events.listJoins(query.memberIds, query.to, HISTORY_EVENT_LIMIT);
+  const joins = dependencies.events.listJoins(query.memberIds, { from: query.from - HISTORY_JOIN_LOOKBACK_MS, to: query.to }, HISTORY_EVENT_LIMIT);
   if (joins instanceof Error) return joins;
 
   const lightEvents = events.filter(isLightEvent);

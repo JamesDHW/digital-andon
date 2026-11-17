@@ -26,10 +26,18 @@ export const requestJson = async <Value>(request: ApiRequest, schema: z.ZodType<
   return parsed.data;
 };
 
-export const requestText = async (request: ApiRequest): Promise<string | AndonError> => {
+export type TextResponse = {
+  readonly text: string;
+  readonly headers: Headers;
+};
+
+/** The body as text, with the headers that describe it, such as where the next page starts. */
+export const requestTextResponse = async (request: ApiRequest): Promise<TextResponse | AndonError> => {
   const response = await send(request);
   if (response instanceof AndonError) return response;
-  return tryCatchAsync(() => response.text());
+  const text = await tryCatchAsync(() => response.text());
+  if (text instanceof AndonError) return text;
+  return { text, headers: response.headers };
 };
 
 export const requestNothing = async (request: ApiRequest): Promise<undefined | AndonError> => {

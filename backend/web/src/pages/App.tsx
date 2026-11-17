@@ -32,7 +32,7 @@ type SignedInProps = {
 };
 
 const SignedIn = ({ token, route, onSignOut }: SignedInProps): ReactElement => {
-  const { snapshot, problem } = useSnapshot(token, onSignOut);
+  const { snapshot, problem, liveSince } = useSnapshot(token, onSignOut);
   const now = useNow(1000);
   const you = snapshot === null ? null : memberById(snapshot.members, snapshot.you);
   const yourLight = snapshot?.lights.find((light) => light.memberId === snapshot.you) ?? null;
@@ -46,7 +46,7 @@ const SignedIn = ({ token, route, onSignOut }: SignedInProps): ReactElement => {
     <AppShell path={route.path} navigate={route.navigate} teamName={snapshot?.teamName ?? null} you={you} yourLight={yourLight} onSignOut={onSignOut}>
       {problem !== null && <p className="border-b border-border bg-surface-sunken px-6 py-2 text-sm text-ink-secondary">{problem}</p>}
       {snapshot === null && <p className="p-6 text-ink-muted">Loading…</p>}
-      {snapshot !== null && <Page token={token} route={route} snapshot={snapshot} now={now} isAdmin={you?.role === "admin"} onSignOut={onSignOut} />}
+      {snapshot !== null && <Page token={token} route={route} snapshot={snapshot} liveSince={liveSince} now={now} isAdmin={you?.role === "admin"} onSignOut={onSignOut} />}
     </AppShell>
   );
 };
@@ -55,20 +55,21 @@ type PageProps = {
   readonly token: string;
   readonly route: Route;
   readonly snapshot: TeamSnapshot;
+  readonly liveSince: number | null;
   readonly now: number;
   readonly isAdmin: boolean;
   readonly onSignOut: () => void;
 };
 
-const Page = ({ token, route, snapshot, now, isAdmin, onSignOut }: PageProps): ReactElement => {
+const Page = ({ token, route, snapshot, liveSince, now, isAdmin, onSignOut }: PageProps): ReactElement => {
   switch (route.path) {
     case "/":
     case "/team":
       return <TeamPage snapshot={snapshot} now={now} navigate={route.navigate} />;
     case "/timeline":
-      return <TimelinePage token={token} route={route} snapshot={snapshot} onSignedOut={onSignOut} />;
+      return <TimelinePage token={token} route={route} snapshot={snapshot} liveSince={liveSince} onSignedOut={onSignOut} />;
     case "/switching":
-      return <SwitchingPage token={token} route={route} snapshot={snapshot} onSignedOut={onSignOut} />;
+      return <SwitchingPage token={token} route={route} snapshot={snapshot} liveSince={liveSince} onSignedOut={onSignOut} />;
     case "/export":
       if (!isAdmin) return <AdminsOnly />;
       return <ExportPage token={token} snapshot={snapshot} onSignedOut={onSignOut} />;

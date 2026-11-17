@@ -7,7 +7,7 @@ import type { Member } from "../src/domain/member.js";
 import { InvalidRequestError } from "../src/errors/andonError.js";
 import { routeRequest } from "../src/http/routeRequest.js";
 import { addMember, createTestTeam, expectSuccess, type TestTeam } from "./support/testTeam.js";
-import { MINUTE_MS, TEST_ORIGIN, TEST_START_TIME } from "./support/testTeam.constants.js";
+import { DAY_MS, DURABLE_OBJECT_MAX_BOUND_PARAMETERS, MINUTE_MS, TEST_ORIGIN, TEST_START_TIME } from "./support/testTeam.constants.js";
 
 /** Priya: red with a status at +10 min, a new status at +20, amber at +30, green at +40. Tom: off at +15. */
 const createBusyMorning = (): { readonly team: TestTeam; readonly priya: Member; readonly tom: Member } => {
@@ -58,6 +58,41 @@ describe("team history", () => {
     expect(history.members[0]?.start).toEqual({ at: minutesIn(0), colour: "green", status: null });
   });
 
+  it("reads the history of more people than a query may bind parameters for", () => {
+    const team = createTestTeam();
+    const priya = addMember(team, "priya");
+    const tom = addMember(team, "tom");
+    const everyone = [priya, tom, ...Array.from({ length: 148 }, (_, index) => addMember(team, `person${index}`))];
+    team.clock.advance(5 * MINUTE_MS);
+    expectSuccess(handleClientMessage(team.dependencies, priya.id, { type: "pull", colour: "red", status: "Flaky test" }));
+    team.clock.advance(5 * MINUTE_MS);
+    expectSuccess(handleClientMessage(team.dependencies, tom.id, { type: "join", memberId: priya.id }));
+
+    const history = expectSuccess(readHistory(team.dependencies, { from: minutesIn(0), to: minutesIn(60), memberIds: everyone.map((member) => member.id) }));
+
+    expect(history.members).toHaveLength(150);
+    expect(history.members[0]?.changes).toEqual([{ at: minutesIn(5), colour: "red", status: "Flaky test" }]);
+    expect(history.members[0]?.joins).toEqual([{ at: minutesIn(10), kind: "join", helperId: tom.id, targetId: priya.id }]);
+    expect(team.mostBoundParameters()).toBeLessThanOrEqual(DURABLE_OBJECT_MAX_BOUND_PARAMETERS);
+  });
+
+  it("knows who was with whom when a window opens, from joins in the week before it", () => {
+    const team = createTestTeam();
+    const priya = addMember(team, "priya");
+    const tom = addMember(team, "tom");
+    const aisha = addMember(team, "aisha");
+    expectSuccess(handleClientMessage(team.dependencies, priya.id, { type: "pull", colour: "red" }));
+    expectSuccess(handleClientMessage(team.dependencies, tom.id, { type: "join", memberId: priya.id }));
+    team.clock.advance(2 * DAY_MS);
+    expectSuccess(handleClientMessage(team.dependencies, aisha.id, { type: "join", memberId: priya.id }));
+    team.clock.advance(6 * DAY_MS);
+    const opens = team.clock.now();
+
+    const history = expectSuccess(readHistory(team.dependencies, { from: opens, to: opens + MINUTE_MS, memberIds: [priya.id] }));
+
+    expect(history.members[0]?.joins).toEqual([{ at: opens - 6 * DAY_MS, kind: "join", helperId: aisha.id, targetId: priya.id }]);
+  });
+
   it("refuses a window that ends before it starts", () => {
     const team = createTestTeam();
     expect(readHistory(team.dependencies, { from: minutesIn(10), to: minutesIn(5), memberIds: [] })).toBeInstanceOf(InvalidRequestError);
@@ -94,5 +129,19 @@ describe("web endpoints", () => {
     expect(lines[1]).toContain(",priya,");
 
     expect((await get(team, "/team/events?format=csv", priyaToken)).response.status).toBe(403);
+  });
+
+  it("pages the admin CSV: a full page says where the next starts, and the last says nothing", async () => {
+    const { team } = createBusyMorning();
+    const adminToken = await signIn(team, addMember(team, "james", "admin"));
+
+    const first = await get(team, "/team/events?format=csv&limit=3", adminToken);
+    const nextAfterId = first.response.headers.get("x-next-after-id");
+    expect(first.response.headers.get("x-event-count")).toBe("3");
+    expect(nextAfterId).toBe((await first.response.text()).split("\n")[3]?.split(",")[0]);
+
+    const last = await get(team, `/team/events?format=csv&limit=3&afterId=${nextAfterId ?? ""}`, adminToken);
+    expect(last.response.headers.get("x-event-count")).toBe("2");
+    expect(last.response.headers.get("x-next-after-id")).toBeNull();
   });
 });

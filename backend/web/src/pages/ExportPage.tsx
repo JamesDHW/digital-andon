@@ -24,18 +24,18 @@ export const ExportPage = ({ token, snapshot, onSignedOut }: ExportPageProps): R
   const isEveryone = people.length === everyone.length;
   const download = async (): Promise<void> => {
     setMessage("Preparing…");
-    const csv = await fetchEventsCsv(token, { range: resolveWindow(window, Date.now()), memberIds: isEveryone ? null : people });
-    if (csv instanceof UnauthorisedError) return onSignedOut();
-    if (csv instanceof AndonError) return setMessage(csv.message);
-    const rows = Math.max(0, csv.split("\n").length - 1);
-    saveTextFile(`digital-andon-${new Date().toISOString().slice(0, 10)}.csv`, csv, "text/csv");
-    setMessage(`Downloaded ${rows} ${rows === 1 ? "change" : "changes"}.`);
+    const showProgress = (rows: number): void => setMessage(`Preparing… ${rows.toLocaleString()} so far`);
+    const exported = await fetchEventsCsv(token, { range: resolveWindow(window, Date.now()), memberIds: isEveryone ? null : people }, showProgress);
+    if (exported instanceof UnauthorisedError) return onSignedOut();
+    if (exported instanceof AndonError) return setMessage(exported.message);
+    saveTextFile(`digital-andon-${new Date().toISOString().slice(0, 10)}.csv`, exported.csv, "text/csv");
+    setMessage(`Downloaded ${exported.rows.toLocaleString()} ${exported.rows === 1 ? "change" : "changes"}.`);
   };
   const handleDownload = (): void => void download();
   return (
     <div className="max-w-2xl p-8">
       <h1 className="text-2xl font-semibold tracking-tight">Export</h1>
-      <p className="mt-2 text-sm text-ink-secondary">Every change of light and context, and every time someone joined or left someone, one row each, with who and when. Up to 5,000 rows per file.</p>
+      <p className="mt-2 text-sm text-ink-secondary">Every change of light and context, and every time someone joined or left someone, one row each, with who and when.</p>
       <div className="mt-6 space-y-4 rounded-lg border border-border bg-surface-raised p-5">
         <Field label="People">
           <PeoplePicker members={snapshot.members} selected={people} follows={snapshot.follows} onChange={setPeople} />

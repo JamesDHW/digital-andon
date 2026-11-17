@@ -1,8 +1,10 @@
-import type { AndonError } from "@backend/errors/andonError.js";
+import { AndonError } from "@backend/errors/andonError.js";
 import type { MemberId } from "@backend/domain/memberId.js";
 import type { TeamSnapshot } from "../domain/board.js";
 import type { TimeRange } from "../domain/timeRange.js";
-import { get, requestJson, requestNothing, requestText } from "./apiClient.js";
+import { joinCsvPages } from "../domain/csvPages.js";
+import { EVENT_PAGE_COUNT_HEADER, EVENT_PAGE_LIMIT, EVENT_PAGE_NEXT_HEADER } from "./api.constants.js";
+import { get, requestJson, requestNothing, requestTextResponse } from "./apiClient.js";
 import { historySchema, settingsSchema, snapshotSchema, type History, type TeamSettings } from "./schemas.js";
 
 export const fetchSnapshot = (token: string): Promise<TeamSnapshot | AndonError> => requestJson(get("/team/snapshot", token), snapshotSchema);
@@ -18,12 +20,48 @@ export type CsvFilters = {
   readonly memberIds: readonly MemberId[] | null;
 };
 
-export const fetchEventsCsv = (token: string, filters: CsvFilters): Promise<string | AndonError> => {
-  const query = new URLSearchParams({ format: "csv", limit: "5000", from: String(Math.round(filters.range.from)), to: String(Math.round(filters.range.to)) });
+export type EventsCsv = {
+  readonly csv: string;
+  readonly rows: number;
+};
+
+/** Every page of the export, one after another, joined into one file. */
+export const fetchEventsCsv = async (token: string, filters: CsvFilters, onProgress: (rows: number) => void): Promise<EventsCsv | AndonError> => {
+  const pages = await fetchCsvPages(token, filters, 0, { pages: [], rows: 0 }, onProgress);
+  if (pages instanceof AndonError) return pages;
+  return { csv: joinCsvPages(pages.pages), rows: pages.rows };
+};
+
+type CsvPages = {
+  readonly pages: readonly string[];
+  readonly rows: number;
+};
+
+const fetchCsvPages = async (
+  token: string,
+  filters: CsvFilters,
+  afterId: number,
+  sofar: CsvPages,
+  onProgress: (rows: number) => void,
+): Promise<CsvPages | AndonError> => {
+  const query = new URLSearchParams({
+    format: "csv",
+    limit: String(EVENT_PAGE_LIMIT),
+    afterId: String(afterId),
+    from: String(Math.round(filters.range.from)),
+    to: String(Math.round(filters.range.to)),
+  });
   if (filters.memberIds !== null) {
     query.set("memberIds", filters.memberIds.join(","));
   }
-  return requestText(get(`/team/events?${query.toString()}`, token));
+  const response = await requestTextResponse(get(`/team/events?${query.toString()}`, token));
+  if (response instanceof AndonError) return response;
+
+  const collected = { pages: [...sofar.pages, response.text], rows: sofar.rows + Number(response.headers.get(EVENT_PAGE_COUNT_HEADER) ?? 0) };
+  onProgress(collected.rows);
+  const nextAfterId = Number(response.headers.get(EVENT_PAGE_NEXT_HEADER) ?? Number.NaN);
+  if (!Number.isSafeInteger(nextAfterId)) return collected;
+  return fetchCsvPages(token, filters, nextAfterId, collected, onProgress);
 };
 
 export const fetchSettings = (token: string): Promise<TeamSettings | AndonError> => requestJson(get("/team/settings", token), settingsSchema);

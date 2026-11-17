@@ -20,20 +20,17 @@ type TimelinePageProps = {
   readonly token: string;
   readonly route: Route;
   readonly snapshot: TeamSnapshot;
+  readonly liveSince: number | null;
   readonly onSignedOut: () => void;
 };
 
 /** Where people's lights have been. People and window live in the address, so a view can be shared as a link. */
-export const TimelinePage = ({ token, route, snapshot, onSignedOut }: TimelinePageProps): ReactElement => {
+export const TimelinePage = ({ token, route, snapshot, liveSince, onSignedOut }: TimelinePageProps): ReactElement => {
   const now = useNow(LIVE_WINDOW_REFRESH_MS);
   const window = windowFromQuery(route.query);
   const range = resolveWindow(window, now);
   const people = selectedPeople(route.query, snapshot);
-  const lightsKey = snapshot.lights
-    .filter((light) => people.includes(light.memberId) || (light.helping !== null && people.includes(light.helping)))
-    .map((light) => `${light.memberId}:${light.colour}:${light.since}:${light.status ?? ""}:${light.helping ?? ""}`)
-    .join("|");
-  const { history, isLoading, problem } = useHistory(token, range, people, lightsKey, onSignedOut);
+  const { history, isLoading, problem } = useHistory(token, window, people, snapshot.lights, liveSince, onSignedOut);
   const { ref, width } = useElementWidth<HTMLDivElement>();
   const timelines = (history?.members ?? []).flatMap((memberHistory): PersonTimeline[] => {
     const member = memberById(snapshot.members, memberHistory.memberId);
