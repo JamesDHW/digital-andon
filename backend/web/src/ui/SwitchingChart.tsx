@@ -10,6 +10,7 @@ import type { PersonTimeline, TimelineSegment } from "../domain/timeline.js";
 import type { TimeRange } from "../domain/timeRange.js";
 import { Avatar } from "./Avatar.js";
 import { Hint } from "./Hint.js";
+import { LinkedText } from "./LinkedText.js";
 import { BAND_FILL, SIGNAL_COLOUR } from "./ui.constants.js";
 
 type SwitchingChartProps = {
@@ -102,7 +103,7 @@ type ContextDetailsProps = {
 
 const ContextDetails = ({ segment }: ContextDetailsProps): ReactElement => (
   <span className="block">
-    <span className="block font-medium">{segment.status ?? "No context"}</span>
+    <span className="block font-medium break-words">{segment.status === null ? "No context" : <LinkedText text={segment.status} />}</span>
     <span className="block text-ink-secondary">
       {lightName(segment.colour)} · {formatMoment(segment.from)} – {formatMoment(segment.to)}
     </span>

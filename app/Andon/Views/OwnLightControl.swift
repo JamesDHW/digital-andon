@@ -57,10 +57,12 @@ struct OwnLightControl: View {
 
     private var contextRow: some View {
         HStack(alignment: .center) {
-            Text(context ?? "No context")
-                .font(.callout)
-                .foregroundStyle(context == nil ? Color.secondary : Color.primary)
-                .lineLimit(2)
+            if let context {
+                ContextText(text: context, font: .callout, colour: .primary)
+            }
+            if context == nil {
+                Text("No context").font(.callout).foregroundStyle(.secondary)
+            }
             Spacer()
             Button(context == nil ? "Set context…" : "Change…", action: actions.editContextFromDropdown)
                 .buttonStyle(.bordered)

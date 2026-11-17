@@ -51,6 +51,7 @@ final class StatusItemController: NSObject, NSPopoverDelegate {
         guard let button = statusItem.button, !popover.isShown else { return }
         let frontmost = NSWorkspace.shared.frontmostApplication
         previousApp = frontmost == NSRunningApplication.current ? nil : frontmost
+        navigation.opened()
         NSApp.activate()
         popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
         popover.contentViewController?.view.window?.makeKey()

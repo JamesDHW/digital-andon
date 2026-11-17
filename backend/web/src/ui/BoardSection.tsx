@@ -5,6 +5,7 @@ import type { BoardTile } from "../domain/board.js";
 import { formatDuration } from "../domain/format.js";
 import { lightName } from "../domain/lightNames.js";
 import { AvatarGroup } from "./AvatarGroup.js";
+import { LinkedText } from "./LinkedText.js";
 import { Hint } from "./Hint.js";
 import { SIGNAL_COLOUR } from "./ui.constants.js";
 
@@ -69,7 +70,11 @@ const TileDetails = ({ tile, now }: TileDetailsProps): ReactElement => (
       {lightName(tile.light.colour)} for {formatDuration(now - tile.light.since)}
       {tile.isOnline ? "" : " · offline"}
     </span>
-    {tile.light.status !== null && <span className="mt-1 block text-ink">{tile.light.status}</span>}
+    {tile.light.status !== null && (
+      <span className="mt-1 block break-words text-ink">
+        <LinkedText text={tile.light.status} />
+      </span>
+    )}
     {tile.helpers.length > 0 && <span className="mt-1 block text-ink-secondary">Joined by {tile.helpers.map((helper) => helper.member.name).join(", ")}</span>}
   </span>
 );

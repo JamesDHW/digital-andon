@@ -23,7 +23,7 @@ struct DropdownView: View {
     private var page: some View {
         switch navigation.page {
         case .team:
-            teamPage
+            teamPage.id(navigation.openings)
         case let .context(returnsToTeam):
             ContextPromptView(
                 colour: teamStore.yourLight?.colour ?? .green,

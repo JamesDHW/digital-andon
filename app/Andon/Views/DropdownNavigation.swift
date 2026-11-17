@@ -14,4 +14,10 @@ enum DropdownPage: Equatable {
 @MainActor
 final class DropdownNavigation: ObservableObject {
     @Published var page: DropdownPage = .team
+    /// Counts openings of the popover, so expanded context goes back to two lines each time it opens.
+    @Published private(set) var openings = 0
+
+    func opened() {
+        openings += 1
+    }
 }
