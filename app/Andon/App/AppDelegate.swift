@@ -53,7 +53,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             actions: actions,
             updater: updater
         )
-        let statusItemController = StatusItemController(teamStore: teamStore, navigation: navigation, dropdown: dropdown)
+        let statusItemController = StatusItemController(teamStore: teamStore, preferencesStore: preferencesStore, navigation: navigation, dropdown: dropdown)
         self.statusItemController = statusItemController
         wireActions(to: statusItemController)
         wireNotifications()

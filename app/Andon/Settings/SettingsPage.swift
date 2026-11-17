@@ -1,7 +1,7 @@
 import AndonKit
 import SwiftUI
 
-/// Settings, inside the popover: you, who you follow, notifications and shortcuts, then updates and signing out.
+/// Settings, inside the popover: you, the display, notifications, shortcuts and who you follow, then updates and signing out.
 struct SettingsPage: View {
     @ObservedObject var accountController: AccountController
     @ObservedObject var teamStore: TeamStore
@@ -17,6 +17,9 @@ struct SettingsPage: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
                     account
+                    SettingsSection(title: "Display") {
+                        DisplaySettingsView(preferencesStore: preferencesStore)
+                    }
                     SettingsSection(title: "Notifications") {
                         NotificationSettingsView(preferencesStore: preferencesStore)
                     }

@@ -38,11 +38,14 @@ public struct NotificationPreferences: Codable, Equatable, Sendable {
 
 public struct Preferences: Equatable, Sendable {
     public var notifications: NotificationPreferences
+    /// Disrupted and Blocked drawn brighter than white on screens that can (XDR), while plugged in. On by default.
+    public var isBrightColours: Bool
 
-    public static let standard = Preferences(notifications: .standard)
+    public static let standard = Preferences(notifications: .standard, isBrightColours: true)
 
-    public init(notifications: NotificationPreferences) {
+    public init(notifications: NotificationPreferences, isBrightColours: Bool) {
         self.notifications = notifications
+        self.isBrightColours = isBrightColours
     }
 }
 
@@ -50,10 +53,12 @@ public struct Preferences: Equatable, Sendable {
 extension Preferences: Codable {
     private enum CodingKeys: String, CodingKey {
         case notifications
+        case isBrightColours
     }
 
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         self.notifications = try container.decodeIfPresent(NotificationPreferences.self, forKey: .notifications) ?? .standard
+        self.isBrightColours = try container.decodeIfPresent(Bool.self, forKey: .isBrightColours) ?? Preferences.standard.isBrightColours
     }
 }

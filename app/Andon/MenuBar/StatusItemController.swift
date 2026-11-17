@@ -3,13 +3,15 @@ import AppKit
 import Combine
 import SwiftUI
 
-/// Owns the menu bar item: redraws it whenever the team, the connection, a photo or the power source changes, or a red
+/// Owns the menu bar item: redraws it whenever the team, the connection, a photo, the power source or the Bright colours
+/// setting changes, or a red
 /// reaches ten minutes, and shows the dropdown. Nothing runs on a repeating timer; breathing is left to Core Animation.
 @MainActor
 final class StatusItemController: NSObject, NSPopoverDelegate {
     private let statusItem: NSStatusItem
     private let popover: NSPopover
     private let teamStore: TeamStore
+    private let preferencesStore: PreferencesStore
     private let navigation: DropdownNavigation
     private let avatarCache = AvatarImageCache()
     private var inputs = MenuBarInputs(state: nil, connection: .signedOut)
@@ -23,8 +25,9 @@ final class StatusItemController: NSObject, NSPopoverDelegate {
     private var subscriptions = Set<AnyCancellable>()
     private var appearanceObservation: NSKeyValueObservation?
 
-    init(teamStore: TeamStore, navigation: DropdownNavigation, dropdown: DropdownView) {
+    init(teamStore: TeamStore, preferencesStore: PreferencesStore, navigation: DropdownNavigation, dropdown: DropdownView) {
         self.teamStore = teamStore
+        self.preferencesStore = preferencesStore
         self.navigation = navigation
         self.statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         self.popover = NSPopover()
@@ -112,6 +115,13 @@ final class StatusItemController: NSObject, NSPopoverDelegate {
             .receive(on: RunLoop.main)
             .sink { [weak self] _ in self?.render() }
             .store(in: &subscriptions)
+        preferencesStore.$preferences
+            .map(\.isBrightColours)
+            .removeDuplicates()
+            .dropFirst()
+            .receive(on: RunLoop.main)
+            .sink { [weak self] _ in self?.render() }
+            .store(in: &subscriptions)
         powerSource.onChange = { [weak self] in self?.render() }
     }
 
@@ -143,7 +153,12 @@ final class StatusItemController: NSObject, NSPopoverDelegate {
         let screen = button.window?.screen ?? NSScreen.main
         let scale = screen?.backingScaleFactor ?? 2
         let headroom = StatusBitmap.headroom(of: screen)
-        let isBoosted = headroom > 1 && model.hasRaisedLight && powerSource.canAffordBoost
+        let isBoosted = BrightColours.isBoosted(
+            isEnabled: preferencesStore.preferences.isBrightColours,
+            screenHeadroom: Double(headroom),
+            hasRaisedLight: model.hasRaisedLight,
+            canAffordBoost: powerSource.canAffordBoost
+        )
         let isDarkMenuBar = button.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
         let photos = currentPhotos()
         let drawFrame = { (pulse: CGFloat) in
