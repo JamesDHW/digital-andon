@@ -14,6 +14,10 @@ set -euo pipefail
 : "${SPARKLE_PRIVATE_KEY:?Set SPARKLE_PRIVATE_KEY}"
 : "${RELEASE_DOWNLOAD_PREFIX:?Set RELEASE_DOWNLOAD_PREFIX, e.g. https://github.com/org/digital-andon/releases/download/v0.2.0/}"
 
+# How long to wait for Apple's notary service before failing the release: about three times Apple's own figure for
+# 98% of submissions (15 minutes). Apple keeps processing after we stop waiting, so a rerun can pick it up.
+NOTARY_TIMEOUT="45m"
+
 MARKETING_VERSION="${VERSION#v}"
 # Sparkle compares build numbers, so derive a rising one from the version: 1.2.3 → 10203.
 BUILD_NUMBER="${BUILD_NUMBER:-$(awk -F. '{ print $1 * 10000 + $2 * 100 + $3 }' <<< "$MARKETING_VERSION")}"
@@ -62,9 +66,23 @@ ln -s /Applications "$BUILD_DIR/dmg-staging/Applications"
 hdiutil create -volname "Digital Andon" -srcfolder "$BUILD_DIR/dmg-staging" -ov -format UDZO "$BUILD_DIR/Digital-Andon.dmg"
 codesign --force --timestamp --sign "Developer ID Application" "$BUILD_DIR/Digital-Andon.dmg"
 
-echo "==> Notarising (this usually takes a few minutes)"
-xcrun notarytool submit "$BUILD_DIR/Digital-Andon.dmg" \
-  --key "$NOTARY_KEY_PATH" --key-id "$NOTARY_KEY_ID" --issuer "$NOTARY_ISSUER_ID" --wait
+echo "==> Notarising (this usually takes a few minutes; gives up after $NOTARY_TIMEOUT)"
+NOTARY_AUTH=(--key "$NOTARY_KEY_PATH" --key-id "$NOTARY_KEY_ID" --issuer "$NOTARY_ISSUER_ID")
+NOTARY_RESULT="$BUILD_DIR/notary-result.json"
+xcrun notarytool submit "$BUILD_DIR/Digital-Andon.dmg" "${NOTARY_AUTH[@]}" \
+  --wait --timeout "$NOTARY_TIMEOUT" --output-format json > "$NOTARY_RESULT" || true
+cat "$NOTARY_RESULT"
+echo
+NOTARY_STATUS="$(plutil -extract status raw -o - "$NOTARY_RESULT" 2>/dev/null || echo "no answer")"
+SUBMISSION_ID="$(plutil -extract id raw -o - "$NOTARY_RESULT" 2>/dev/null || echo "")"
+if [[ "$NOTARY_STATUS" != "Accepted" ]]; then
+  echo "::error::Notarisation didn't succeed (status: $NOTARY_STATUS). A status of \"In Progress\" means Apple was still checking after $NOTARY_TIMEOUT: see https://developer.apple.com/system-status/ and rerun the job later." >&2
+  if [[ -n "$SUBMISSION_ID" ]]; then
+    echo "==> Apple's notary log for submission $SUBMISSION_ID"
+    xcrun notarytool log "$SUBMISSION_ID" "${NOTARY_AUTH[@]}" || true
+  fi
+  exit 1
+fi
 xcrun stapler staple "$BUILD_DIR/Digital-Andon.dmg"
 spctl --assess --type open --context context:primary-signature --verbose "$BUILD_DIR/Digital-Andon.dmg"
 
