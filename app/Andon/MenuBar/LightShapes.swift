@@ -20,10 +20,10 @@ enum LightShapes {
         NSGraphicsContext.saveGraphicsState()
         for coveringRect in covering {
             let cutout = coveringRect.insetBy(dx: -MenuBarLayout.overlapCutout, dy: -MenuBarLayout.overlapCutout)
-            outsideClip(of: NSBezierPath(ovalIn: cutout)).addClip()
+            outsideClip(of: NSBezierPath(ovalIn: cutout), around: rect).addClip()
         }
         if let squircleRect {
-            outsideClip(of: squircle(in: squircleRect, inset: -MenuBarLayout.overlapCutout)).addClip()
+            outsideClip(of: squircle(in: squircleRect, inset: -MenuBarLayout.overlapCutout), around: rect).addClip()
         }
         let ringAlpha = personAlpha * breathingAlpha(isBreathing: face.isBreathing, rendering: rendering)
         drawRing(in: rect, colour: MenuBarPalette.fill(for: face.colour, rendering: rendering).withAlphaComponent(ringAlpha))
@@ -91,9 +91,11 @@ enum LightShapes {
         return NSRect(x: rect.midX - size.width / 2, y: rect.midY - size.height / 2, width: size.width, height: size.height)
     }
 
-    /// Everything except the inside of the path, using the even-odd rule.
-    private static func outsideClip(of path: NSBezierPath) -> NSBezierPath {
-        let clip = NSBezierPath(rect: path.bounds.insetBy(dx: -MenuBarLayout.height, dy: -MenuBarLayout.height))
+    /// Everything around the face being drawn except the inside of the path, using the even-odd rule. The area is
+    /// built around the face, not the cutout: a face further along than the cutout's surroundings would be sliced off.
+    private static func outsideClip(of path: NSBezierPath, around faceRect: NSRect) -> NSBezierPath {
+        let area = faceRect.union(path.bounds).insetBy(dx: -MenuBarLayout.height, dy: -MenuBarLayout.height)
+        let clip = NSBezierPath(rect: area)
         clip.append(path)
         clip.windingRule = .evenOdd
         return clip
