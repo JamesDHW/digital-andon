@@ -71,7 +71,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func wireActions(to statusItemController: StatusItemController) {
-        actions.openOnboarding = { [weak self] in _ = self?.showOnboarding() }
+        actions.openOwnWindow = { [weak statusItemController] open in
+            guard let statusItemController else { return open() }
+            statusItemController.handOverToOwnWindow(open)
+        }
+        actions.openOnboarding = { [weak self] in
+            self?.actions.openOwnWindow { _ = self?.showOnboarding() }
+        }
         actions.showDropdown = { [weak statusItemController] page in statusItemController?.show(page) }
         actions.closeDropdown = { [weak statusItemController] in statusItemController?.closeDropdown() }
         actions.isDropdownShown = { [weak statusItemController] in statusItemController?.isDropdownShown ?? false }

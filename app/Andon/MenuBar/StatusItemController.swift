@@ -3,9 +3,8 @@ import AppKit
 import Combine
 import SwiftUI
 
-/// Owns the menu bar item: redraws it whenever the team, the connection, a photo, the power source or the Bright colours
-/// setting changes, or a red
-/// reaches ten minutes, and shows the dropdown. Nothing runs on a repeating timer; breathing is left to Core Animation.
+/// Owns the menu bar item: redraws it whenever the team, the connection, a photo, the power source or Bright colours
+/// change, or a red reaches ten minutes, and shows the dropdown. Nothing repeats on a timer; Core Animation breathes.
 @MainActor
 final class StatusItemController: NSObject, NSPopoverDelegate {
     private let statusItem: NSStatusItem
@@ -20,8 +19,7 @@ final class StatusItemController: NSObject, NSPopoverDelegate {
     private let powerSource: PowerSource
     private var breathingTimer: Timer?
     private var lastClosedAt = Date.distantPast
-    /// The app you were in when the popover opened, given focus back when it closes, so a shortcut never strands you.
-    private var previousApp: NSRunningApplication?
+    private let focus = PopoverFocus()
     private var subscriptions = Set<AnyCancellable>()
     private var appearanceObservation: NSKeyValueObservation?
 
@@ -49,8 +47,7 @@ final class StatusItemController: NSObject, NSPopoverDelegate {
 
     func showDropdown() {
         guard let button = statusItem.button, !popover.isShown else { return }
-        let frontmost = NSWorkspace.shared.frontmostApplication
-        previousApp = frontmost == NSRunningApplication.current ? nil : frontmost
+        focus.popoverWillOpen()
         navigation.opened()
         NSApp.activate()
         popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
@@ -61,6 +58,17 @@ final class StatusItemController: NSObject, NSPopoverDelegate {
         popover.performClose(nil)
     }
 
+    /// Closes the popover for one of the app's own windows (updates, sign-in) and opens it in front, rather than
+    /// handing focus back to the app you were in, which would put the new window behind that app's windows.
+    func handOverToOwnWindow(_ open: () -> Void) {
+        if popover.isShown {
+            focus.handOverToOwnWindow()
+            closeDropdown()
+        }
+        NSApp.activate()
+        open()
+    }
+
     @objc private func toggleDropdown(_ sender: Any?) {
         if popover.isShown { return closeDropdown() }
         let isReopeningFromTheSameClick = Date().timeIntervalSince(lastClosedAt) < AppConstants.popoverReopenGuardSeconds
@@ -69,14 +77,10 @@ final class StatusItemController: NSObject, NSPopoverDelegate {
     }
 
     /// A click on the icon closes the transient popover on mouse-down; this stops mouse-up reopening it.
-    /// Closed with Esc or ↩ (rather than by clicking another app), focus goes back to where you were.
     func popoverDidClose(_ notification: Notification) {
         lastClosedAt = Date()
         navigation.page = .team
-        if NSApp.isActive {
-            previousApp?.activate()
-        }
-        previousApp = nil
+        focus.popoverDidClose()
     }
 
     private func configurePopover(with dropdown: DropdownView) {

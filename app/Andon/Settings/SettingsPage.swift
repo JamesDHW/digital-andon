@@ -66,7 +66,7 @@ struct SettingsPage: View {
 
     private var footer: some View {
         HStack {
-            Button("Check for Updates…", action: updater.checkForUpdates)
+            Button("Check for Updates…") { actions.openOwnWindow(updater.checkForUpdates) }
                 .disabled(!updater.isConfigured)
             Spacer()
             if accountController.session != nil {

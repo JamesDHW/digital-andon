@@ -8,6 +8,8 @@ final class AndonActions {
     private let teamStore: TeamStore
     let sender: LightSender
     var openOnboarding: () -> Void = {}
+    /// Opens one of the app's own windows in front of everything, closing the popover without giving focus away.
+    var openOwnWindow: (_ open: () -> Void) -> Void = { open in open() }
     /// Opens the popover on a page, or switches page if it's already open.
     var showDropdown: (DropdownPage) -> Void = { _ in }
     var closeDropdown: () -> Void = {}
