@@ -1,5 +1,8 @@
 # Digital Andon
 
+Install: `brew install --cask JamesDHW/tap/digital-andon`.
+Note: sign-in to this service is restricted to Theodo domains.
+
 A digital andon cord for a software team. Everyone's status is one of three lights, from the menu bar or a keyboard shortcut:
 
 - **Clear** (green): work is progressing as expected.
