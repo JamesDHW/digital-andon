@@ -1,8 +1,5 @@
 # Digital Andon
 
-Install: `brew install --cask JamesDHW/tap/digital-andon`.
-Note: sign-in to this service is restricted to Theodo domains.
-
 A digital andon cord for a software team. Everyone's status is one of three lights, from the menu bar or a keyboard shortcut:
 
 - **Clear** (green): work is progressing as expected.
@@ -10,6 +7,12 @@ A digital andon cord for a software team. Everyone's status is one of three ligh
 - **Blocked** (red): work cannot continue without external attention.
 
 The people who follow them see it straight away in their Mac menu bar, and someone **joins** them. Everything is logged, and the web app shows the whole team live and how everyone's lights have moved over time.
+
+## Quick start
+
+Install: `brew install --cask JamesDHW/tap/digital-andon`.
+
+**Note**: sign-in to this service is restricted to Theodo domains.
 
 ![Menu bar states](docs/menubar-preview.png)
 
